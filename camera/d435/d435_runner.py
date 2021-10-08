@@ -56,8 +56,8 @@ class D435_Runner(base.Base):
         align_to = rs.stream.color
         self.align = rs.align(align_to)
 
-        # the intrinsic
-        self.intrinsic = None       #<- Need to be set when the frame is get. Didn't find other methods
+        # the 3-by-3 intrinsic matrix
+        self.intrinsic_mat = None       #<- Need to be set when the frame is get. Didn't find other methods
         for i in range(20):
             self.get_frames()           #<- run several steps of get_frames to initialize the intrinsic. Not sure whether there are better methods
 
@@ -83,9 +83,10 @@ class D435_Runner(base.Base):
             return None, None, False
             
         # update the intrinsic matrix stored in the calibrator, in case of the camera profile change
-        if self.intrinsic is None:
+        if self.intrinsic_mat is None:
             intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
             intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+            self.intrinsic_mat = intrinsic_Mat
 
         # Convert realsense images to numpy arrays. Depth image in meters
         depth_raw = np.asanyarray(depth_frame.get_data())
