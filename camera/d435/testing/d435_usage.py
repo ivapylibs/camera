@@ -29,10 +29,10 @@ while(True):
         print("Cannot get the camera signals. Exiting...")
         exit()
 
-    display.display_rgb_dep(rgb, dep, suptitle="THe D435 camera signals. Press any key to end", fh=fh)
-    plt.draw()
-    plt.show(block=False)
-    if plt.waitforbuttonpress(0.01):
+    display.display_rgb_dep_cv(rgb[:,:,::-1], dep, ratio=0.5, window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
+
+    opKey = cv2.waitKey(1)
+    if opKey == ord('q'):
         break
 
 
