@@ -29,8 +29,8 @@ class D435_Configs():
     """ 
     W_dep: int = 1280
     H_dep: int = 720
-    W_rgb: int = 1920
-    H_rgb: int = 1080
+    W_color: int = 1920
+    H_color: int = 1080
 
 
 class D435_Runner(base.Base):
@@ -74,7 +74,7 @@ class D435_Runner(base.Base):
         frames = self.pipeline.wait_for_frames()
 
         # align depth2color
-        frames = self.alignalign.process(frames)
+        frames = self.align.process(frames)
 
         # split depth and color. <class 'pyrealsense2.video_frame'>
         depth_frame = frames.get_depth_frame()
@@ -90,4 +90,6 @@ class D435_Runner(base.Base):
         # Convert realsense images to numpy arrays. Depth image in meters
         depth_raw = np.asanyarray(depth_frame.get_data())
         depth_image = depth_raw * self.depth_scale
-        color_image = np.asanyarray(color_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())[:,:,::-1]   #<- bgr to rgb
+
+        return color_image, depth_image, True
