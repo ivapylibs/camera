@@ -13,8 +13,8 @@ class Base():
 
     Defines some shared functionality interfaces
     """
-    def __init__(self) -> None:
-        self.configs = None
+    def __init__(self, configs) -> None:
+        self.configs = configs
 
     def get_frames(self):
         """Get the next frames
