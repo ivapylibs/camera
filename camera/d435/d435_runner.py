@@ -58,6 +58,8 @@ class D435_Runner(base.Base):
 
         # the intrinsic
         self.intrinsic = None       #<- Need to be set when the frame is get. Didn't find other methods
+        for i in range(20):
+            self.get_frames()           #<- run several steps of get_frames to initialize the intrinsic. Not sure whether there are better methods
 
     def get_frames(self):
         """Get the next frames
