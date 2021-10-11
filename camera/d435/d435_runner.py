@@ -25,12 +25,18 @@ class D435_Configs():
         H_dep (int. Optional). The height of the depth sensor. Defaults to 720.
         W_color (int. Optional). The width of the color sensor. Defaults to 1920.
         H_color (int. Optional). The height of the color sensor. Defaults to 1080.
+        exposure (int. Optional.) The camera exposure. Defaults to None, in which case will \
+            enable auto_exposure (if gain is also None) or use the default value 50 (according to Yiye's test)
+        gain (int. Optional.) The camera gain. Defaults to None, in which case will \
+            enable auto_exposure (if gain is also None) or use the default value 64 (according to Yiye's test)
     
     """ 
     W_dep: int = 1280
     H_dep: int = 720
     W_color: int = 1920
     H_color: int = 1080
+    exposure: int = None
+    gain: int = None
 
 
 class D435_Runner(base.Base):
@@ -55,6 +61,18 @@ class D435_Runner(base.Base):
         # prepare depth2color aligner
         align_to = rs.stream.color
         self.align = rs.align(align_to)
+
+        # set color sensor exposure & camera gain
+        # NOTE:color sensor is always the second one: https://github.com/IntelRealSense/librealsense/issues/3558#issuecomment-549405382
+        # NOTE: auto_exposure will automatically set both the gain and the exposure. 
+        # Setting the exposure or gain will automatically disable exposure. See: https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras
+        # NOTE:see all available options here:https://intelrealsense.github.io/librealsense/python_docs/_generated/pyrealsense2.option.html
+        self.auto_exposure = True   #<- auto exposure mode
+        self.color_sensor = self.profile.get_device().query_sensors()[1]
+        if self.configs.exposure is not None:
+            self.color_sensor.set_option(rs.option.exposure, self.configs.exposure)
+        if self.configs.gain is not None:
+            self.color_sensor.set_option(rs.option.gain, self.configs.gain)
 
         # the 3-by-3 intrinsic matrix
         self.intrinsic_mat = None       #<- Need to be set when the frame is get. Didn't find other methods
@@ -94,3 +112,15 @@ class D435_Runner(base.Base):
         color_image = np.asanyarray(color_frame.get_data())[:,:,::-1]   #<- bgr to rgb
 
         return color_image, depth_image, True
+    
+    def get(self, key):
+        if key == "exposure" or "gain":
+            value = self.color_sensor.get_option(
+                eval("rs.option." + key)
+            )
+        elif key == "W_rgb" or key == "H_rgb" or key == "W_dep" or key == "H_dep":
+            value = eval("self.configs." + key)
+        else:
+            raise NotImplementedError
+
+        return value
