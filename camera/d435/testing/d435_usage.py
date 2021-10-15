@@ -24,6 +24,9 @@ d435_configs = d435.D435_Configs(
 
 d435_starter = d435.D435_Runner(d435_configs)
 
+#fh = plt.figure()
+##plt.show()
+#plt.ion()
 while(True):
     rgb, dep, success = d435_starter.get_frames()
     print("The camera gain: {}. The camera exposure: {}".format(d435_starter.get("gain"), d435_starter.get("exposure")))
@@ -36,6 +39,10 @@ while(True):
     opKey = cv2.waitKey(1)
     if opKey == ord('q'):
         break
+
+    #display.display_rgb_dep_plt(rgb, dep, suptitle=None, fh=fh)
+    #plt.draw()
+    #plt.pause(1)
 
 
 

@@ -37,6 +37,9 @@ class frameWriter(object):
         self.path_idx_mode = path_idx_mode
         self.id = 0
 
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+
         # paths to save data
         self.rgb_path = None
         self.data_path = None
@@ -47,7 +50,7 @@ class frameWriter(object):
 
         # save
         print("Saving the current frame to: {} and {}".format(self.rgb_path, self.data_path))
-        cv2.imwrite(self.rgb_path, img_rgb)
+        cv2.imwrite(self.rgb_path, img_rgb[:,:,::-1])
         np.savez(self.data_path, 
             depth_frame=dep, 
             **kwargs
@@ -116,9 +119,10 @@ class vidWriter(object):
         # cache
         self.cache_folder = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "cache"
+            "cache_vidWriter"
         )
-        os.mkdir(self.cache_folder)
+        if not os.path.exists(self.cache_folder):
+            os.mkdir(self.cache_folder)
         self.cache_id = 0
 
     def save_frame(self, img_rgb, dep):
