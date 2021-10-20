@@ -11,7 +11,7 @@ import cv2
 
 import camera.d435.d435_runner as d435
 
-import Surveillance.utils.display as display
+import camera.utils.display as display
 
 d435_configs = d435.D435_Configs(
     W_dep=1280,
