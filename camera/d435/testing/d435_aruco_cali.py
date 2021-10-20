@@ -31,11 +31,11 @@ d435_starter = d435.D435_Runner(d435_configs)
 calibrator_CtoW = CtoW_Calibrator_aruco(
     d435_starter.intrinsic_mat,
     distCoeffs=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
-    markerLength_CL = 0.067,
-    maxFrames = 10,
+    markerLength_CL = 0.08,
+    maxFrames = 30,
     flag_vis_extrinsic = True,
     flag_print_MCL = True,
-    stabilize_version = True
+    stabilize_version =True 
 )
 
 fh = plt.figure()
@@ -50,11 +50,14 @@ while(True):
     M_CL, corners_aruco, img_with_ext = calibrator_CtoW.process(rgb, dep) 
 
     # Bird-eye-view rectification
-    topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco, returnMode=1) 
+    topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco, returnMode=1,
+            target_size=200) 
+
 
     # visualization
     display.display_images_cv([img_with_ext[:,:,::-1], topDown_image[:,:,::-1]], ratio=0.5, \
         window_name="The extrinsic calibration(right, the aruco frame) and the Bird-eye-view rectification(right). Press \'q\' to exit")
+    
 
     opKey = cv2.waitKey(1)
     if opKey == ord('q'):

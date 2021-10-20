@@ -10,7 +10,7 @@
 import numpy as np
 import cv2
 
-def BEV_rectify_aruco(image, corners, target_pos="down", returnMode=2):
+def BEV_rectify_aruco(image, corners, target_pos="down", target_size = 100, margin=100, returnMode=2):
     '''The bird-eye-view rectification based on the aruco tag
     Project the image to the aruco frame by estimating an affine transformation matrix that maps the Aruco corners to the desired coordinates 
 
@@ -20,6 +20,8 @@ def BEV_rectify_aruco(image, corners, target_pos="down", returnMode=2):
                                 \"down\"(Default): The bottom middle of the frame. The margin is 100. The Aruco size is 100; 
                                 \"top\": The upper middle of the frame. The margin is 100. The Aruco size is 100; 
                                 Coordinates (np.ndarray. (4, 2)): The customized desired location
+    @param[in]    target_size:  The target size of the Aruco after the rectification. Unit is pixel
+    @param[in]          margin: The margin of the tag from the image side
     @param[in]    returnMode:   1-return rectified image only; 
                                 2-return composed origin-rectified image
     '''
@@ -35,12 +37,10 @@ def BEV_rectify_aruco(image, corners, target_pos="down", returnMode=2):
     corners = corners[[x%4 for x in [idx_min, idx_min+1, idx_min+2, idx_min+3]]]
 
     # create the perspective transformation matrix from the aruco corners. Put the point at the top-middle.     
-    sizeDes = 100
-    margin_top = 100 
-    pDes_top = np.float32([[image.shape[1]/2-sizeDes/2, margin_top], [image.shape[1]/2+sizeDes/2, margin_top], 
-                        [image.shape[1]/2+sizeDes/2, sizeDes + margin_top], [ image.shape[1]/2-sizeDes/2, sizeDes + margin_top]])
-    pDes_down = np.float32([[image.shape[1]/2-sizeDes/2, image.shape[0] - margin_top - sizeDes], [image.shape[1]/2+sizeDes/2, image.shape[0] - margin_top - sizeDes], 
-                        [image.shape[1]/2+sizeDes/2, image.shape[0] - margin_top], [ image.shape[1]/2-sizeDes/2, image.shape[0] - margin_top]])
+    pDes_top = np.float32([[image.shape[1]/2-target_size/2, margin], [image.shape[1]/2+target_size/2, margin], 
+                        [image.shape[1]/2+target_size/2, target_size + margin], [ image.shape[1]/2-target_size/2, target_size + margin]])
+    pDes_down = np.float32([[image.shape[1]/2-target_size/2, image.shape[0] - margin - target_size], [image.shape[1]/2+target_size/2, image.shape[0] - margin - target_size], 
+                        [image.shape[1]/2+target_size/2, image.shape[0] - margin], [ image.shape[1]/2-target_size/2, image.shape[0] - margin]])
     if target_pos == "down":
         pDes = pDes_down
     elif target_pos == "top":

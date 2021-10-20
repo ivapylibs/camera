@@ -25,11 +25,11 @@ d435_configs = d435.D435_Configs(
 d435_starter = d435.D435_Runner(d435_configs)
 
 #fh = plt.figure()
-##plt.show()
+#plt.show()
 #plt.ion()
 while(True):
     rgb, dep, success = d435_starter.get_frames()
-    print("The camera gain: {}. The camera exposure: {}".format(d435_starter.get("gain"), d435_starter.get("exposure")))
+    #print("The camera gain: {}. The camera exposure: {}".format(d435_starter.get("gain"), d435_starter.get("exposure")))
     if not success:
         print("Cannot get the camera signals. Exiting...")
         exit()

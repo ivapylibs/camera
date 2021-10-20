@@ -72,8 +72,9 @@ class CtoW_Calibrator_aruco():
             """
             M_CL_cur, other_infos = self.calibrate(img, depth)
             self.M_CL = M_CL_cur
-            self.corners_aruco = other_infos["corners_aruco"][0].squeeze()
-            self.other_infos = other_infos
+            if other_infos is not None:
+                self.corners_aruco = other_infos["corners_aruco"][0].squeeze()
+                self.other_infos = other_infos
         elif self.maxFrames is not None and self.frame_counter > self.maxFrames:
             """
             Stabilize version, but the calibration window has past
@@ -83,7 +84,8 @@ class CtoW_Calibrator_aruco():
             if self.maxFrames is not None:
                 self.frame_counter = self.frame_counter + 1
             M_CL_cur, other_infos = self.calibrate(img, depth)
-            self.update(M_CL_cur, other_infos)
+            if other_infos is not None:
+                self.update(M_CL_cur, other_infos)
 
         if self.flag_print_MCL:
             print(self.M_CL)
