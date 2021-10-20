@@ -15,7 +15,7 @@ import camera.d435.d435_runner as d435
 from camera.extrinsic.aruco import CtoW_Calibrator_aruco
 from camera.utils.utils import BEV_rectify_aruco 
 
-import Surveillance.utils.display as display
+import camera.utils.display as display
 
 # The D435 starter
 d435_configs = d435.D435_Configs(
