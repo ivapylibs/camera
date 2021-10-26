@@ -10,6 +10,7 @@
 ======================================= tabletop_plane =========================================
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.core.fromnumeric import sort
 from sklearn.decomposition import PCA
@@ -35,6 +36,7 @@ class tabletopPlaneEstimator():
         self.pca = PCA(n_components=3)
 
         # the result
+        self.p_cam_map = None           #<-(H, W, 3). The map of the 3d coords of the calibration data in the camera frame
         self.plane_params = None        #<- (4, ) Params [a, b, c, d] of the plane equation
     
     def measure_plane(self, depth_map):
@@ -48,12 +50,67 @@ class tabletopPlaneEstimator():
             error_map (np.ndarray, (H, W)): The distance between each pixel and the estimated plane. 
                 Expected to be low for the tabletop pixel
         """
-        p_cam_map = self._recover_p_Cam(depth_map)
-        plane_params = self._estimate_plane(p_cam_map)
+        self.p_cam_map = self._recover_p_Cam(depth_map)
+        plane_params = self._estimate_plane(self.p_cam_map)
         self._update_plane(plane_params)
 
-        error_map = self._produce_error_map(p_cam_map)
+        error_map = self._produce_error_map(self.p_cam_map)
         return error_map
+    
+    def vis_plane(self, rgb):
+        """Visualize the calibrated point clouds in the camera frame
+
+        Args:
+            rgb (np.ndarray, (H, W, 3)). The camera frame
+        """
+        import pptk
+
+        point_clouds = None
+        color_clouds = None
+
+        # The data - rgba color
+        p_cam_vec = self.p_cam_map.reshape((-1, 3))
+        color = rgb.reshape(-1, 3)/255
+        color = np.concatenate(
+            (color, np.ones_like(color[:, :1])),
+            axis=1
+        )
+        point_clouds = p_cam_vec
+        color_clouds = color
+
+        # the estimated plane
+        x = np.linspace(-0.5, 0.5, num=1000)
+        y = np.linspace(-0.5, 0.5, num=1000)
+        xv, yv = np.meshgrid(x, y)
+        xy = np.concatenate(
+            (xv.reshape(-1, 1), yv.reshape(-1, 1)),
+            axis=1
+        )
+        z = (- xy @ self.plane_params[:2] - self.plane_params[3]) / self.plane_params[2]
+        xyz = np.concatenate(
+            (xy, z.reshape(-1, 1)),
+            axis=1
+        )
+        color_plane = np.zeros_like(xyz)
+        color_plane[:, 0] = 1
+        color_plane = np.concatenate(
+            (color_plane, np.ones_like(color_plane[:, :1])/10),
+            axis=1
+        )
+
+        point_clouds = np.concatenate(
+            (point_clouds, xyz),
+            axis=0
+        )
+        color_clouds = np.concatenate(
+            (color_clouds, color_plane),
+            axis=0
+        )
+
+        # visualize
+        v = pptk.viewer(point_clouds)
+        v.attributes(color_clouds) 
+        
     
     def get_plane_params(self):
         """Get the estimated plane parameters
@@ -73,6 +130,7 @@ class tabletopPlaneEstimator():
         @param[out] vec     Vectorize the outputs? Default is False
 
         @param[out] uv_map  The (u, v) coordinate of the image pixels. (H, W, 2), where 2 is (u, v)
+                            If vec is True, then will be (H*W, 2)
         """
         H, W = img.shape[:2]
         rows, cols = np.indices((H, W))
@@ -85,7 +143,7 @@ class tabletopPlaneEstimator():
 
         # TODO: Vectorize the output instead as a map?
         if vec:
-            pass
+            uv_map = uv_map.reshape(-1, 2)
 
         return uv_map
 

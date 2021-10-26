@@ -25,7 +25,8 @@ class HeightEstimator(tabletopPlaneEstimator):
 
     Assuming the visual field contains only one surface,
     Given the depth map and the camera intrinsic matrix,
-    The height estimator derive the transformation to get the distance map of each pixel to the surface
+    The height estimator derive the transformation to get the distance map of each pixel to the surface.
+    The transformation will be directly applied on the homogeneous pixel coordinates.
 
     Args:
         intrinsic (np.ndarray. (3,3)): The camera intrinsic matrix.
@@ -72,6 +73,7 @@ class HeightEstimator(tabletopPlaneEstimator):
         T = -d
         """
         # (H, W, 3)
+        error_map = self.measure_plane(depth_map)
         plane_params = self.get_plane_params()
         R, T = self._get_RT(plane_params)
         return R, T
