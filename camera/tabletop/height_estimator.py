@@ -32,7 +32,7 @@ class HeightEstimator(tabletopPlaneEstimator):
         intrinsic (np.ndarray. (3,3)): The camera intrinsic matrix.
     """
     def __init__(self, intrinsic):
-        self.intrinsic = intrinsic
+        super().__init__(intrinsic=intrinsic)
 
         # R: (1, 3). T:(1,). the naming is a little misleading. Consider changing them
         self.R = None
@@ -59,7 +59,7 @@ class HeightEstimator(tabletopPlaneEstimator):
         height = self.R @ (uvz_map.reshape((-1, 3)).T) + self.T
         height = height.T.reshape(H, W)
         
-        return height 
+        return np.abs(height )
 
     def _measure_params(self, depth_map):
         """

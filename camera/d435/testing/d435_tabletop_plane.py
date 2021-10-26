@@ -45,7 +45,7 @@ while(True):
         exit()
 
     display.display_rgb_dep_cv(rgb, dep, ratio=0.5, \
-        window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
+        window_name="Please clear the table and press \"c\" to estimate the tabletop plane")
 
     opKey = cv2.waitKey(1)
     if opKey == ord('q'):
