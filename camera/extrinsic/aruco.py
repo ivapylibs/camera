@@ -30,7 +30,8 @@ class CtoW_Calibrator_aruco():
     @param[in]  cameraMatrix            - The camera intrinsic matrix
     @param[in]  distCoeffs              - The camera distortion matrix
     @param[in]  markerLength_CL         - The marker side length in meters
-    @param[in]  stabilize_version               - stabilize_version version or not.
+    @param[in]  stabilize_version       - stabilize_version version or not. When set to true, then only the first maxFrames number of frames will be used for calibration, 
+                                          and the result will be fixed for the future frames.
     @param[in]  (optional)maxFrames     - The max frame number after which the M_CL updating ceases. If None, then will always update.
                                           (Default: 5000)
 
@@ -51,6 +52,7 @@ class CtoW_Calibrator_aruco():
         self.flag_print_MCL = flag_print_MCL
 
         # calibration result. 
+        self.detected = False       # whether an Aruco has been detected
         self.M_CL = None
         self.corners_aruco = None 
         self.other_infos = {}  # for visualization
@@ -65,37 +67,53 @@ class CtoW_Calibrator_aruco():
         self.cache_occr = []
         self.cache_other_infos = []
 
-    def process(self, img, depth):
+    def process(self, img, depth=None):
+        """
+        Process function that calibrate the extrinsic matrix from the corresponding rgb and depth frame
+
+        Args:
+            img (np.ndarray, (H, W, 3)). The rgb image
+            depth (np.ndarray, (H, W), optional). The depth map. Not used for now so set to optional. Defaults to None,
+                it is a placeholder for the future improvement based on the depth
+        Returns:
+            M_CL [np.ndarray, (4, 4)]. The extrinsic matrix
+            corners_aruco [np.ndarray]. The detected aruco tag corners
+            img_with_ext. [np.ndarray, (H, W, 3)]. The color image with the aruco tag coordinate. Useful for visualization. 
+                In the stablize version, if no aruco is detected, then will draw the 
+            status [binary]. True if an aruco is detected (non-stablize version) or a result has been stored (stablize version).
+        """
         if not self.stabilize_version:
             """
             Not stabilize version, meaning calibrate with no memory
             """
             M_CL_cur, other_infos = self.calibrate(img, depth)
-            self.M_CL = M_CL_cur
-            if other_infos is not None:
+            # if detect a new aruco in the non-stablize version, then simply replace the new result
+            if M_CL_cur is not None:
+                self.M_CL = M_CL_cur
                 self.corners_aruco = other_infos["corners_aruco"][0].squeeze()
                 self.other_infos = other_infos
-        elif self.maxFrames is not None and self.frame_counter > self.maxFrames:
+                self.detected = True
+            else:
+                self.detected = False
+        elif self.frame_counter > self.maxFrames:
             """
             Stabilize version, but the calibration window has past
             """
             self.stable_status = True
         else:
-            if self.maxFrames is not None:
-                self.frame_counter = self.frame_counter + 1
             M_CL_cur, other_infos = self.calibrate(img, depth)
-            if other_infos is not None:
+            if M_CL_cur is not None:
+                self.frame_counter = self.frame_counter + 1
+                self.detected = True
                 self.update(M_CL_cur, other_infos)
 
-        if self.flag_print_MCL:
+        if (self.flag_print_MCL) and self.detected:
             print(self.M_CL)
 
         if self.flag_vis_ext:
             self._vis_ext(img)
-        else:
-            self.img_with_ext = img 
 
-        return self.M_CL, self.corners_aruco, self.img_with_ext
+        return self.M_CL, self.corners_aruco, self.img_with_ext, self.detected
     
     def calibrate(self, img, depth):
         '''
@@ -139,8 +157,8 @@ class CtoW_Calibrator_aruco():
         :param gray:
         :param image_init:
         :param visualize:
-        param[out]       M_CL:  The extrinsic matrix. (4, 4)
-        param[out] corners_CL:  The detected aruco corners in the image frame. (4, 2)
+        param[out]       M_CL:  The extrinsic matrix. (4, 4). If no aruco is detected then will return the stored matrix
+        param[out] corners_CL:  The detected aruco corners in the image frame. (4, 2). If 
         '''
         # parameters
         #markerLength_CL = 0.076
@@ -153,7 +171,7 @@ class CtoW_Calibrator_aruco():
         # for the first frame, it may contain nothing
         if ids_CL is None:
             self.img_with_ext = copy.deepcopy(image_init)
-            return self.M_CL, None
+            return None, None
 
         rvec_CL, tvec_CL, _objPoints_CL = aruco.estimatePoseSingleMarkers(corners_CL[0], self.markerLength_CL,
                                                                           self.cameraMatrix, self.distCoeffs)
@@ -173,9 +191,10 @@ class CtoW_Calibrator_aruco():
     
     def _vis_ext(self, img):
         image_copy = copy.deepcopy(img)
-        cv2.aruco.drawDetectedMarkers(image_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
-        aruco.drawAxis(image_copy, self.cameraMatrix, self.distCoeffs,
-            self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], self.markerLength_CL)
+        if self.detected:
+            cv2.aruco.drawDetectedMarkers(image_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
+            aruco.drawAxis(image_copy, self.cameraMatrix, self.distCoeffs,
+                self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], self.markerLength_CL)
         self.img_with_ext = image_copy
     
     def _same_ext_mat(self, M_CL1, M_CL2):

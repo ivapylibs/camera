@@ -47,11 +47,14 @@ while(True):
         exit()
 
     # calibrate
-    M_CL, corners_aruco, img_with_ext = calibrator_CtoW.process(rgb, dep) 
+    M_CL, corners_aruco, img_with_ext, status = calibrator_CtoW.process(rgb, dep) 
 
     # Bird-eye-view rectification
-    topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco, returnMode=1,
-            target_size=200) 
+    if status is True:
+        topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco, returnMode=1,
+                target_size=200) 
+    else:
+        topDown_image = np.zeros_like(rgb, dtype=np.uint8)
 
 
     # visualization
