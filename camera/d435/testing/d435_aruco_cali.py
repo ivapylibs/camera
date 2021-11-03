@@ -51,8 +51,10 @@ while(True):
 
     # Bird-eye-view rectification
     if status is True:
-        topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco, returnMode=1,
-                target_size=200) 
+        topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco,
+                target_size=200, mode="same") 
+        topDown_image2, BEV_mat2 = BEV_rectify_aruco(rgb, corners_aruco, 
+                target_size=200, mode="full") 
     else:
         topDown_image = np.zeros_like(rgb, dtype=np.uint8)
 
@@ -60,6 +62,9 @@ while(True):
     # visualization
     display.display_images_cv([img_with_ext[:,:,::-1], topDown_image[:,:,::-1]], ratio=0.5, \
         window_name="The extrinsic calibration(right, the aruco frame) and the Bird-eye-view rectification(right). Press \'q\' to exit")
+
+    display.display_images_cv([topDown_image2[:,:,::-1]], ratio=0.5, \
+        window_name="The top-down view with the full size")
     
 
     opKey = cv2.waitKey(1)

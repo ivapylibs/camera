@@ -10,9 +10,9 @@
 import numpy as np
 import cv2
 
-def BEV_rectify_aruco(image, corners, target_pos="down", target_size = 100, margin=100, returnMode=2):
+def BEV_rectify_aruco(image, corners, target_pos="down", target_size = 100, margin=100, mode="full"):
     '''The bird-eye-view rectification based on the aruco tag
-    Project the image to the aruco frame by estimating an affine transformation matrix that maps the Aruco corners to the desired coordinates 
+    Project the image to the aruco frame by estimating an affine transformation matrix that maps the Aruco corners to the desired coordinates .
 
     @param[in]         image:   The image to be rectified. np.ndarray
     @param[in]       corners:   The coordinates of the four corners of the aruco tag, starting from top-left and goes clock-wise. (4, 2)
@@ -22,9 +22,16 @@ def BEV_rectify_aruco(image, corners, target_pos="down", target_size = 100, marg
                                 Coordinates (np.ndarray. (4, 2)): The customized desired location
     @param[in]    target_size:  The target size of the Aruco after the rectification. Unit is pixel
     @param[in]          margin: The margin of the tag from the image side
-    @param[in]    returnMode:   1-return rectified image only; 
-                                2-return composed origin-rectified image
+    @param[in]          mode:   "same". Rectify the aruco to the desired location, then crop the result image to have the same size as the original image.
+                                "full". The rectified image will be translated and crop with different size to contain the full visual field. 
+                                        Method follows the following link: https://stackoverflow.com/questions/13063201/how-to-show-the-whole-image-when-using-opencv-warpperspective
+
+    @param[out]     image_rec:  The rectified image.
+    @param[out]     warp_mat:   The warping matrix
     '''
+    # input size
+    H, W = image.shape[:2]
+
     # numpy img -> opencv image. scale the color range to (0, 1)
     if isinstance(image, np.ndarray):
         src = image/255.0
@@ -53,12 +60,26 @@ def BEV_rectify_aruco(image, corners, target_pos="down", target_size = 100, marg
     warp_mat, gb = cv2.findHomography(corners, pDes)
 
     # calculate the transformed image
-    image_rec = cv2.warpPerspective( image, warp_mat, (image.shape[1], image.shape[0]))
+    if mode == "same":
+        image_rec = cv2.warpPerspective( image, warp_mat, (W, H))
+    elif mode == "full":
+        # determine the minimum and maximum x and y value
+        img_corners = np.float32([[0,0],[0,H],[W,H],[W,0]]).reshape(-1,1,2)
+        img_corners_ = cv2.perspectiveTransform(img_corners, warp_mat)
+        [xmin, ymin] = np.int32(img_corners_.min(axis=0).ravel() - 0.5)
+        [xmax, ymax] = np.int32(img_corners_.max(axis=0).ravel() + 0.5)
+
+        # Define the translation matrix to get all pixel coordinates to be positive
+        warp_mat_translate = np.array([[1,0,-xmin],[0,1,-ymin],[0,0,1]])
+        warp_mat = warp_mat_translate @ warp_mat
+
+        # determine the cropping size
+        xsize = xmax - xmin
+        ysize = ymax - ymin
+
+        # rectify
+        image_rec = cv2.warpPerspective(image, warp_mat, (xsize ,ysize))
+    else: raise NotImplementedError
     
     # return
-    if returnMode == 1:
-        image_return = image_rec 
-    elif returnMode == 2:
-        image_return = cv2.hconcat([image, image_rec])
-    
-    return image_return, warp_mat
+    return image_rec, warp_mat
