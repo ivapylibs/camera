@@ -76,7 +76,7 @@ class CtoW_Calibrator_aruco():
             depth (np.ndarray, (H, W), optional). The depth map. Not used for now so set to optional. Defaults to None,
                 it is a placeholder for the future improvement based on the depth
         Returns:
-            M_CL [np.ndarray, (4, 4)]. The extrinsic matrix
+            M_CL [np.ndarray, (4, 4)]. The extrinsic aruco-to-camera transformation matrix
             corners_aruco [np.ndarray]. The detected aruco tag corners
             img_with_ext. [np.ndarray, (H, W, 3)]. The color image with the aruco tag coordinate. Useful for visualization. 
                 In the stablize version, if no aruco is detected, then will draw the 
@@ -173,6 +173,7 @@ class CtoW_Calibrator_aruco():
             self.img_with_ext = copy.deepcopy(image_init)
             return None, None
 
+        # see the doc for explanation http://amroamroamro.github.io/mexopencv/matlab/cv.estimatePoseSingleMarkers.html
         rvec_CL, tvec_CL, _objPoints_CL = aruco.estimatePoseSingleMarkers(corners_CL[0], self.markerLength_CL,
                                                                           self.cameraMatrix, self.distCoeffs)
         

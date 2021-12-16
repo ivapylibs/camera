@@ -19,10 +19,11 @@ import camera.utils.rs_utils as rs_utils
 class D435_Configs():
     """The configurations for the D435 camera
     For the detailed explanations and options, please refer to the D435 official document.
+    NOTE: The default depth resolution 848x480 is the optimal for the d435 camera. See https://dev.intelrealsense.com/docs/tuning-depth-cameras-for-best-performance
 
     Args:
-        W_dep (int. Optional). The width of the depth sensor. Defaults to 1280.
-        H_dep (int. Optional). The height of the depth sensor. Defaults to 720.
+        W_dep (int. Optional). The width of the depth sensor. Defaults to 848.
+        H_dep (int. Optional). The height of the depth sensor. Defaults to 480.
         W_color (int. Optional). The width of the color sensor. Defaults to 1920.
         H_color (int. Optional). The height of the color sensor. Defaults to 1080.
         exposure (int. Optional.) The camera exposure. Defaults to None, in which case will \
@@ -31,8 +32,8 @@ class D435_Configs():
             enable auto_exposure (if gain is also None) or use the default value 64 (according to Yiye's test)
     
     """ 
-    W_dep: int = 1280
-    H_dep: int = 720
+    W_dep: int = 848
+    H_dep: int = 480
     W_color: int = 1920
     H_color: int = 1080
     exposure: int = None

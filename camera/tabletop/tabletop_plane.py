@@ -63,6 +63,8 @@ class tabletopPlaneEstimator():
         Args:
             rgb (np.ndarray, (H, W, 3)). The camera frame
         """
+        Warning("This function uses the pptk for 3d point cloud visualization, which is only supported by the Python3.7. \
+            The matplotlib can also visualize the point cloud, but it is very slow.")
         import pptk
 
         point_clouds = None
@@ -119,6 +121,16 @@ class tabletopPlaneEstimator():
             plane_params [np.ndarray, (4,)]. The estimated plane parameters. Will be None if no plane has been estimated
         """
         return self.plane_params
+    
+    def get_PCA_results(self):
+        """Get the PCA result of the tabletop point cloud in the camera frame
+
+        Returns:
+            pVecs [np.ndarray, (3, 3)]. The principle directions in the camera frame sorted by "importance". \
+                Each row corresponds to a principle direction. The last row (pVecs[-1,:]) corresponds to the normal direction.
+            mean [np.ndarray, (3, )]. The mean of the point cloud in the camera frame
+        """
+        return self.pca.components_, self.pca.mean_
 
     def _get_uv(self, img, vec=False):
         """
@@ -198,9 +210,11 @@ class tabletopPlaneEstimator():
         mask = (z_c_vec >= th_low) & (z_c_vec <= th_high)
         p_Cam_vec_mid = p_Cam_vec[mask, :]
 
-        # fit the plane
+        # PCA of the point cloud
         self.pca.fit(p_Cam_vec_mid)
         print("\n Got the fitted plane from the PCA. The three variance ratios are:{} \n".format(self.pca.explained_variance_ratio_))
+
+        # get the plane normal direction (a, b, c), which corresponds to the less important principle vector
         normal = self.pca.components_[-1, :] #(a, b, c)
         # use the mean to calculate d
         mean = np.mean(p_Cam_vec_mid, axis=0) 

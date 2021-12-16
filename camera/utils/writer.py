@@ -63,20 +63,20 @@ class frameWriter(object):
         if self.path_idx_mode:
             self.rgb_path = os.path.join(
                 self.dirname,
-                self.frame_name + '_{}.png'.format(str(self.id))
+                self.frame_name + '_{}.png'.format(str(self.id).zfill(3))
             )
             self.data_path = os.path.join(
                 self.dirname, 
-                self.frame_name + '_{}.npz'.format(str(self.id))
+                self.frame_name + '_{}.npz'.format(str(self.id).zfill(3))
             )
         else:
             self.rgb_path = os.path.join(
                 self.dirname,
-                self.frame_name + '.png'.format(str(self.id))
+                self.frame_name + '.png'.format(str(self.id).zfill(3))
             )
             self.data_path = os.path.join(
                 self.dirname, 
-                self.frame_name + '.npz'.format(str(self.id))
+                self.frame_name + '.npz'.format(str(self.id).zfill(3))
             )
 
 
