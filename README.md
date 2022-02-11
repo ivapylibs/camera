@@ -9,6 +9,22 @@ pip3 install -e camera/
 
 
 
+## Note:
+
+1. ```testing/d435_tabletop_plane.py``` dependency only available on Python 3.7.
+
+   This testing file uses a 3d visualization package ```pptk``` that is only available for the python 3.7, which is for helping some undergrads understand the algorithm in a course. If you use the python 3.7 environment and want to run this file, please install the dependency first:
+
+   ```bash
+   pip install pptk
+   ```
+
+   The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation. You can skip that testing file and run the ```testing/d435_height.py``` directly. 
+
+   Or you can install the python 3.7 following the setups below and then install the ```pptk``` to run the plane visualization.
+
+
+
 ## Ubuntu Python Environment Setup
 
 The suggested python version is python 3.7, because one of the package (```pptk```) used in the test script is only supported by the python 3.7. The remaining will use the python 3.7 as an example. Any other version is similar.

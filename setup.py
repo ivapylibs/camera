@@ -6,5 +6,5 @@ setup(name='camera',
   author    = 'IVALab',
   packages  = ['camera'],
   install_requires=['pyrealsense2', 'numpy', 'matplotlib','opencv-contrib-python', \
-    "sklearn", "pptk", "tqdm"]
+    "sklearn", "tqdm"]
 )
