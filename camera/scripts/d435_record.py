@@ -5,18 +5,18 @@ import camera.utils.display as display
 from camera.utils.writer import vidWriter 
 
 # settings
-vidname = "mary_calib_overload"        # save video name
+vidname = "puzzle_play"        # save video name
 W = 1920
 H = 1080
 
 # prepare
 d435_configs = d435.D435_Configs(
-    W_dep=1280,
-    H_dep=720,
+    W_dep=848,
+    H_dep=480,
     W_color=W,
     H_color=H,
     exposure = 100,
-    gain = 100
+    gain = 50
 )
 
 d435_starter = d435.D435_Runner(d435_configs)
@@ -27,7 +27,7 @@ vid_writer = vidWriter(
     W = W,
     H = H,
     activate=True,
-    save_depth=False 
+    save_depth=True 
 )
 
 # get started
