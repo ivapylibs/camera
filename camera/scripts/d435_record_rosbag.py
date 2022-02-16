@@ -12,11 +12,11 @@ default_path = os.path.join(
     "d435_record.bag"
 )
 parser = argparse.ArgumentParser(description='The d435 camera rosbag recorder.')
-parser.add_argument('--save_file_path', default=default_path, type=str, nargs=1,
+parser.add_argument('--target_file_path', default=default_path, type=str, nargs=1,
                     help='The path to save the bag file')
 args = parser.parse_args()
-if not args.save_path.endswith(".bag"):
-    args.save_path = args.save_path + ".bag"
+if not args.target_file_path.endswith(".bag"):
+    args.target_file_path = args.target_file_path + ".bag"
 
 # settings
 W = 1920
@@ -35,7 +35,7 @@ d435_configs = d435.D435_Configs(
 d435_starter = d435.D435_Runner(d435_configs)
 
 vid_writer = vidWriter_ROS(
-    save_file_path=args.save_file_path,
+    save_file_path=args.target_file_path,
     rgb_topic="color",
     dep_topic="depth"
 )
