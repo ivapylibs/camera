@@ -51,7 +51,10 @@ for topic, msg, t in bag.read_messages():
     if rgb is None and depth is None:
         display_rgb_dep_cv(rgb, depth, ratio=0.4, window_name="The playback of {}. Press \'q\' to quit.".format(vidname))
     
-    opKey = cv2.waitKey(1)
-    if opKey == ord('q'):
-        break
+        opKey = cv2.waitKey(1)
+        if opKey == ord('q'):
+            break
+
+        rgb = None
+        depth = None
 
