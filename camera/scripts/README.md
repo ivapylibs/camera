@@ -22,7 +22,7 @@ Some temporary scripts that can potentially evolve into utility classes.
 
    **Description:** Record and save the d435 color and depth streams into a rosbag. 
 
-   **Usage**:  Specify the save path name:
+   **Usage**:  Specify the optional save path name:
 
    ```bash
    python d435_record_rosbag.py --save_file_path YOUR/FILE/PATH
@@ -34,7 +34,7 @@ Some temporary scripts that can potentially evolve into utility classes.
 
    **Description:** Load the rosbag recording of the camera streams and show them.
 
-   **Usage**:  Specify the target path name:
+   **Usage**:  Specify the optional target path name:
 
    ```bash 
    python vid_playback.py --target_file_path YOUR/FILE/PATH
