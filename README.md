@@ -2,6 +2,15 @@
 Encaspulation of typical camera functionality.
 
 ## Install
+
+### Dependencies
+
+Install the following dependencies from the source, where the installation guide is provided in their respective repository.
+
+- [improcessor](https://github.com/ivapylibs/improcessor)
+
+### Install
+
 ```
 git clone https://github.com/ivapylibs/camera.git
 pip3 install -e camera/
