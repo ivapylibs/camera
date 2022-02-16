@@ -12,7 +12,7 @@ import rosbag
 
 class vidWriter_ROS(object):
 
-    def __init__(self, save_file_path, rgb_topic, depth_topic, depth_format):
+    def __init__(self, save_file_path, rgb_topic, depth_topic, depth_format=None):
         """
         Args:
             save_file_path (str): The path to save the file
@@ -51,3 +51,6 @@ class vidWriter_ROS(object):
             self.dep_topic,
             depth_ros
         )
+    
+    def finish(self):
+        self.bag.close()

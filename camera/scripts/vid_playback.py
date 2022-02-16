@@ -1,6 +1,6 @@
 """
 
-    @ brief:        The video playback of the rosbag file
+    @ brief:        The video playback from the rosbag file
 
     @ author:       Yiye Chen
     @ date:         02/16/2022
@@ -48,8 +48,8 @@ for topic, msg, t in bag.read_messages():
         depth = bridge.imgmsg_to_cv2(msg)
     
     # display if gathered both data
-    if rgb is None and depth is None:
-        display_rgb_dep_cv(rgb, depth, ratio=0.4, window_name="The playback of {}. Press \'q\' to quit.".format(vidname))
+    if rgb is not None and depth is not None:
+        display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=0.4, window_name="The playback of {}. Press \'q\' to quit.".format(vidname))
     
         opKey = cv2.waitKey(1)
         if opKey == ord('q'):

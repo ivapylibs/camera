@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
+import improcessor.basic as improcessor
+
 def display_rgb_dep_plt(rgb, depth, suptitle=None, figsize=(10,5), fh=None):
     """Display the rgb and depth image in a same figure at two different axes
     The depth will be displayed with a colorbar beside.
@@ -70,7 +72,7 @@ def display_images_cv(images:list, ratio=None, window_name="OpenCV Display"):
     #  Show images
     cv2.imshow(window_name, image_display)
 
-def display_rgb_dep_cv(rgb, depth, ratio=None, window_name="OpenCV Display"):
+def display_rgb_dep_cv(rgb, depth, depth_clip=0.00, ratio=None, window_name="OpenCV Display"):
 
     """Display the rgb and depth image using the OpenCV
 
@@ -83,12 +85,20 @@ def display_rgb_dep_cv(rgb, depth, ratio=None, window_name="OpenCV Display"):
     Args:
         rgb (np.ndarray, (H, W, 3)): The rgb image
         depth (np.ndarray, (H, W)): The depth map
+        depth_clip (float in [0, 1]): The depth value clipping percentage. The top and bottom extreme depth value to remove. Default to 0.0 (no clipping)
         ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
         window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
     """
+    # depth clip
+    if depth_clip > 0:
+        assert depth_clip < 0.5
+        improc = improcessor.basic(improcessor.basic.clipTails,(depth_clip,))
+        depth_show = improc.apply(depth)
+    else:
+        depth_show = depth
 
     # convert the depth to cv2 image format: scale to 255, convert to 3-channel
-    depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth, alpha=255./depth.max(), beta=0), cv2.COLORMAP_JET)
+    depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_show, alpha=255./depth_show.max(), beta=0), cv2.COLORMAP_JET)
 
     # diplay
     display_images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)

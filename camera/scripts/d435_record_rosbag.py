@@ -1,3 +1,12 @@
+"""
+
+    @ brief:        Record the camera rgb and depth as the rosbag file
+
+    @ author:       Yiye Chen
+    @ date:         02/16/2022
+
+"""
+
 import cv2
 import os
 import argparse
@@ -37,7 +46,7 @@ d435_starter = d435.D435_Runner(d435_configs)
 vid_writer = vidWriter_ROS(
     save_file_path=args.target_file_path,
     rgb_topic="color",
-    dep_topic="depth"
+    depth_topic="depth"
 )
 
 # get started
@@ -48,7 +57,7 @@ while(True):
         print("Cannot get the camera signals. Exiting...")
         exit()
 
-    display.display_rgb_dep_cv(rgb, dep, ratio=0.5, window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
+    display.display_rgb_dep_cv(rgb, dep, depth_clip=0.08, ratio=0.5, window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
     vid_writer.save_frame(rgb,  dep)
 
     opKey = cv2.waitKey(1)
@@ -59,3 +68,4 @@ while(True):
     #plt.draw()
     #plt.pause(1)
 
+vid_writer.finish()
