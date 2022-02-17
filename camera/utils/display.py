@@ -72,7 +72,7 @@ def display_images_cv(images:list, ratio=None, window_name="OpenCV Display"):
     #  Show images
     cv2.imshow(window_name, image_display)
 
-def display_rgb_dep_cv(rgb, depth, depth_clip=0.00, ratio=None, window_name="OpenCV Display"):
+def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
 
     """Display the rgb and depth image using the OpenCV
 

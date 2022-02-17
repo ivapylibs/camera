@@ -60,7 +60,7 @@ while(True):
     display.display_rgb_dep_cv(rgb, dep, depth_clip=0.08, ratio=0.5, window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
     vid_writer.save_frame(rgb,  dep)
 
-    opKey = cv2.waitKey(1)
+    opKey = cv2.waitKey(0.1)
     if opKey == ord('q'):
         break
 
