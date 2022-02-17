@@ -9,6 +9,7 @@
 
 import os
 import argparse
+from time import sleep
 import cv2
 
 from cv_bridge import CvBridge
@@ -24,7 +25,7 @@ default_path = os.path.join(
     "d435_record.bag"
 )
 parser = argparse.ArgumentParser(description='The d435 camera rosbag recorder.')
-parser.add_argument('--save_file_path', default=default_path, type=str, nargs=1,
+parser.add_argument('--save_file_path', default=default_path, type=str,
                     help='The path to save the bag file')
 args = parser.parse_args()
 if not args.save_file_path.endswith(".bag"):
@@ -37,6 +38,10 @@ bridge = CvBridge()
 bag = rosbag.Bag(args.save_file_path)
 vidname = os.path.basename(args.save_file_path)
 
+# get frame rate
+total_time = bag.get_end_time() - bag.get_start_time()      # in seconds
+frame_num = bag.get_message_count(topic_filters="color")
+frame_time_interval = total_time / frame_num
 
 # get started
 rgb = None
@@ -54,7 +59,7 @@ for topic, msg, t in bag.read_messages():
         opKey = cv2.waitKey(1)
         if opKey == ord('q'):
             break
-
+        sleep(frame_time_interval)
         rgb = None
         depth = None
 

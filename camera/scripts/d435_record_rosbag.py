@@ -8,6 +8,7 @@
 """
 
 import cv2
+import numpy as np
 import os
 import argparse
 
@@ -21,8 +22,10 @@ default_path = os.path.join(
     "d435_record.bag"
 )
 parser = argparse.ArgumentParser(description='The d435 camera rosbag recorder.')
-parser.add_argument('--target_file_path', default=default_path, type=str, nargs=1,
+parser.add_argument('--target_file_path', default=default_path, type=str,
                     help='The path to save the bag file')
+parser.add_argument('--frame_rate', default=20, type=int,
+                    help='The frame rate')
 args = parser.parse_args()
 if not args.target_file_path.endswith(".bag"):
     args.target_file_path = args.target_file_path + ".bag"
@@ -46,7 +49,9 @@ d435_starter = d435.D435_Runner(d435_configs)
 vid_writer = vidWriter_ROS(
     save_file_path=args.target_file_path,
     rgb_topic="color",
-    depth_topic="depth"
+    depth_topic="depth",
+    depth_format=np.float32,
+    frame_rate=args.frame_rate
 )
 
 # get started
@@ -60,7 +65,7 @@ while(True):
     display.display_rgb_dep_cv(rgb, dep, depth_clip=0.08, ratio=0.5, window_name="THe camera signals. (color-scaled depth). Press \'q\' to exit")
     vid_writer.save_frame(rgb,  dep)
 
-    opKey = cv2.waitKey(0.1)
+    opKey = cv2.waitKey(1)
     if opKey == ord('q'):
         break
 
