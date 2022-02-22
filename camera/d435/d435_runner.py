@@ -80,8 +80,11 @@ class D435_Runner(base.Base):
         for i in range(20):
             self.get_frames()           #<- run several steps of get_frames to initialize the intrinsic. Not sure whether there are better methods
 
-    def get_frames(self):
+    def get_frames(self, before_scale=False):
         """Get the next frames
+
+        Args:  
+            before_scale (bool). Before the scaling. If True, will get the integer depth map before scaling.
 
         Returns:
             rgb [np.ndarray]: The rgb image
@@ -109,19 +112,29 @@ class D435_Runner(base.Base):
 
         # Convert realsense images to numpy arrays. Depth image in meters
         depth_raw = np.asanyarray(depth_frame.get_data())
-        depth_image = depth_raw * self.depth_scale
+        if before_scale:
+            depth_image = depth_raw
+        else:
+            depth_image = depth_raw * self.depth_scale
         color_image = np.asanyarray(color_frame.get_data())[:,:,::-1]   #<- bgr to rgb
 
         return color_image, depth_image, True
     
     def get(self, key):
-        if key == "exposure" or "gain":
+        """Get attributes specified by the key
+
+        Args:
+            key (str):      Choices: [exposure, gain, W_rgb, H_rgb, W_dep, H_dep, depth_scale, intrinsic_mat]
+        Returns:
+            value
+        """
+        if key == "exposure" or key == "gain":
             value = self.color_sensor.get_option(
                 eval("rs.option." + key)
             )
         elif key == "W_rgb" or key == "H_rgb" or key == "W_dep" or key == "H_dep":
             value = eval("self.configs." + key)
         else:
-            raise NotImplementedError
+            value = eval("self." + key)
 
         return value

@@ -46,14 +46,19 @@ frame_time_interval = total_time / frame_num
 # get started
 rgb = None
 depth = None
+depth_scale = None
 for topic, msg, t in bag.read_messages():
     if topic == "color":
         rgb = bridge.imgmsg_to_cv2(msg)[:,:,::-1]
     elif topic == "depth":
         depth = bridge.imgmsg_to_cv2(msg)
+    elif topic == "depth_scale":
+        depth_scale = msg.data
     
     # display if gathered both data
     if rgb is not None and depth is not None:
+        if depth_scale is not None:
+            depth = depth * depth_scale
         display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=0.4, window_name="The playback of {}. Press \'q\' to quit.".format(vidname))
     
         opKey = cv2.waitKey(1)

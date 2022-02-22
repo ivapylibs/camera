@@ -12,28 +12,38 @@ import time
 from cv_bridge import CvBridge
 import genpy
 import rosbag
+from std_msgs.msg import Float64
 
 class vidWriter_ROS(object):
 
-    def __init__(self, save_file_path, rgb_topic, depth_topic, depth_format=None,
+    def __init__(self, save_file_path, depth_scale, depth_scale_topic, rgb_topic, depth_topic,
         frame_rate = None):
         """
         Args:
             save_file_path (str): The path to save the file
             rgb_topic (str): The topic name for the rgb images
             dep_topic (str): The topic name for the depth maps
-            depth_format (np.dtype): The depth format. If not none, will cast the depth map to this format (mostly to reduce size). \
-                defautls to None
+            depth_scale (float): The depth scale
             frame_rate (int): The frame rate (frame per second.). If not None, will wait for 1/frame_rate after writing out each frame
         """
         self.file_path = save_file_path
-        self.depth_format = depth_format
         self.rgb_topic = rgb_topic
         self.dep_topic = depth_topic
+        self.dep_scale_topic = depth_scale_topic
 
         self.bridge = CvBridge()
         self.bag = rosbag.Bag(self.file_path, 'w')
 
+        # write out the depth scale
+        self.depth_scale = depth_scale
+        depth_scale_msg = Float64()
+        depth_scale_msg.data = self.depth_scale
+        self.bag.write(
+            self.dep_scale_topic,
+            depth_scale_msg
+        )
+
+        # the frame rate
         self.frame_rate = frame_rate
         if self.frame_rate is None:
             self.wait_time = None
@@ -48,11 +58,9 @@ class vidWriter_ROS(object):
 
         Args:
             rgb (array): The rgb image. Will be converted to cv2 bgr format and then the ros image msg
-            depth (_type_): The depth map
+            depth (_type_): The depth map.
             t : The timestamp. Defaults to None, which will use the current time.
         """
-        if self.depth_format is not None:
-            depth = depth.astype(self.depth_format)
         
         if t is None:
             t = genpy.Time.from_sec(time.time())
