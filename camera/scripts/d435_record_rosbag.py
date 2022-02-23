@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 
     @ brief:        Record the camera rgb and depth as the rosbag file
@@ -22,7 +23,7 @@ default_path = os.path.join(
     "d435_record.bag"
 )
 parser = argparse.ArgumentParser(description='The d435 camera rosbag recorder.')
-parser.add_argument('--target_file_path', default=default_path, type=str,
+parser.add_argument('--save_file_path', default=default_path, type=str,
                     help='The path to save the bag file')
 parser.add_argument('--frame_rate', default=20, type=int,
                     help='The frame rate')
@@ -32,8 +33,8 @@ parser.add_argument("--W", default=1920, type=int,
                     help="The frame width")
 
 args = parser.parse_args()
-if not args.target_file_path.endswith(".bag"):
-    args.target_file_path = args.target_file_path + ".bag"
+if not args.save_file_path.endswith(".bag"):
+    args.save_file_path = args.save_file_path + ".bag"
 
 # settings
 W = args.W
@@ -53,7 +54,7 @@ d435_starter = d435.D435_Runner(d435_configs)
 depth_scale = d435_starter.get("depth_scale")
 
 vid_writer = vidWriter_ROS(
-    save_file_path=args.target_file_path,
+    save_file_path=args.save_file_path,
     depth_scale=depth_scale,
     rgb_topic="color",
     depth_topic="depth",

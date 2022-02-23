@@ -25,10 +25,11 @@ Some temporary scripts that can potentially evolve into utility classes.
    **Usage**:  Specify the optional save path name:
 
    ```bash
-   python d435_record_rosbag.py --save_file_path YOUR/FILE/PATH
+   chmox +x d435_record_rosbag.py
+   ./d435_record_rosbag.py --save_file_path YOUR/FILE/PATH
    ```
 
-   If do not specify the argument (i.e. directly run ```python d435_record_rosbag.py```), will save to the ```d435_record.bag``` in this script folder.
+   If do not specify the argument (i.e. directly run ```./d435_record_rosbag.py```), will save to the ```d435_record.bag``` in this script folder.
 
 4. ```vid_playback.py```
 
@@ -37,10 +38,11 @@ Some temporary scripts that can potentially evolve into utility classes.
    **Usage**:  Specify the optional target path name:
 
    ```bash 
-   python vid_playback.py --target_file_path YOUR/FILE/PATH
+   chmox +x vid_playback.py
+   ./vid_playback.py --save_file_path YOUR/FILE/PATH
    ```
-
-   If do not specify the argument (i.e. directly run ```python vid_playback.py```), will look for the ```d435_record.bag``` in this script folder.
+   
+   If do not specify the argument (i.e. directly run ```./vid_playback.py```), will look for the ```d435_record.bag``` in this script folder.
 
 
 

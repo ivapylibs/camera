@@ -7,6 +7,7 @@
 
 """
 import numpy as np
+import os
 import time
 
 from cv_bridge import CvBridge
@@ -108,3 +109,13 @@ class vidWriter_ROS(object):
         # clear the counter
         self.cur_time = 0
         self.wait_time_counter = 0
+
+        # compress
+        print("Compressing the rosbag data:")
+        os.system("rosbag compress {}".format(self.file_path))
+        # remove the original file
+        name = os.path.splitext(self.file_path)[0]
+        os.remove(
+            name + ".orig.bag"
+        )
+
