@@ -6,6 +6,8 @@ Some temporary scripts that can potentially evolve into utility classes.
 
 ## Function Description and Usage
 
+​	**NOTE: ** Currently we need to execute the following inside the script folder.
+
 1. ```d435_record_color.py```
 
    **Description:**Record and save the d435 color streams into a video. 
@@ -25,7 +27,7 @@ Some temporary scripts that can potentially evolve into utility classes.
    **Usage**:  Directly run it and follow the instructions:
 
    ```bash
-   ./d435_record_rosbag.py
+   ./d435_record_rosbag_user.py
    ```
    
    If do not specify the argument (i.e. directly run ```./d435_record_rosbag.py```), will save to the ```d435_record.bag``` in this script folder.
