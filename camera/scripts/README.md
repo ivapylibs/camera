@@ -6,7 +6,7 @@ Some temporary scripts that can potentially evolve into utility classes.
 
 ## Function Description and Usage
 
-​	**NOTE: ** Currently we need to execute the following inside the script folder.
+​	**NOTE:** Currently we need to execute the following inside the script folder.
 
 1. ```d435_record_color.py```
 
