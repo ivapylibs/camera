@@ -9,6 +9,7 @@
 import numpy as np
 import os
 import time
+import subprocess
 
 from cv_bridge import CvBridge
 import genpy
@@ -18,7 +19,7 @@ from std_msgs.msg import Float64
 class vidWriter_ROS(object):
 
     def __init__(self, save_file_path, depth_scale, depth_scale_topic, rgb_topic, depth_topic,
-        frame_rate = None):
+        frame_rate = None, auto_compress = False):
         """
         Args:
             save_file_path (str): The path to save the file
@@ -26,6 +27,7 @@ class vidWriter_ROS(object):
             dep_topic (str): The topic name for the depth maps
             depth_scale (float): The depth scale
             frame_rate (int): The frame rate (frame per second.). If not None, will wait for 1/frame_rate after writing out each frame
+            auto_compress (str): Automatically perform rosbag compress after the recording
         """
         self.file_path = save_file_path
         self.rgb_topic = rgb_topic
@@ -52,6 +54,9 @@ class vidWriter_ROS(object):
             self.wait_time = 1./self.frame_rate  # The wait time between frames in seconds
         self.wait_time_counter = 0  # count the wait time
         self.cur_time = 0           # store the time of the current frame save
+
+        # auto compress
+        self.auto_compress = auto_compress
     
     #def save_frame(self, rgb:np.ndarray, depth:np.ndarray, t=None):
     def save_frame(self, rgb, depth, t=None):
@@ -102,8 +107,18 @@ class vidWriter_ROS(object):
             depth_ros,
             t
         )
-
     
+    def compress(self):
+        # compress
+        print("Compressing the rosbag data:")
+        print(self.file_path)
+        os.system("rosbag compress {}".format(self.file_path))
+        # remove the original file
+        name = os.path.splitext(self.file_path)[0]
+        os.remove(
+           name + ".orig.bag"
+        )
+
     def finish(self):
         self.bag.close()
         # clear the counter
@@ -111,11 +126,8 @@ class vidWriter_ROS(object):
         self.wait_time_counter = 0
 
         # compress
-        print("Compressing the rosbag data:")
-        os.system("rosbag compress {}".format(self.file_path))
-        # remove the original file
-        name = os.path.splitext(self.file_path)[0]
-        os.remove(
-            name + ".orig.bag"
-        )
+        if self.auto_compress:
+            self.compress()
+
+
 

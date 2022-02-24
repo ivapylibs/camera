@@ -18,19 +18,18 @@ Some temporary scripts that can potentially evolve into utility classes.
 
    **Usage**: Set the compress setting (the new FPS and the resolution ratio) and the video name to be compressed at the beginning of the script, then run the file directory via ```python vid_compress.py```.
    
-3. ```d435_record_rosbag.py```
+3. ```d435_record_rosbag_user.py```
 
    **Description:** Record and save the d435 color and depth streams into a rosbag. 
 
-   **Usage**:  Specify the optional save path name:
+   **Usage**:  Directly run it and follow the instructions:
 
    ```bash
-   chmox +x d435_record_rosbag.py
-   ./d435_record_rosbag.py --save_file_path YOUR/FILE/PATH
+   ./d435_record_rosbag.py
    ```
-
+   
    If do not specify the argument (i.e. directly run ```./d435_record_rosbag.py```), will save to the ```d435_record.bag``` in this script folder.
-
+   
 4. ```vid_playback.py```
 
    **Description:** Load the rosbag recording of the camera streams and show them.
@@ -38,7 +37,6 @@ Some temporary scripts that can potentially evolve into utility classes.
    **Usage**:  Specify the optional target path name:
 
    ```bash 
-   chmox +x vid_playback.py
    ./vid_playback.py --save_file_path YOUR/FILE/PATH
    ```
    
