@@ -37,6 +37,9 @@ class frameWriter(object):
         self.path_idx_mode = path_idx_mode
         self.id = 0
 
+        # Todo: Need double-check the path
+        if not os.path.exists(os.path.dirname(dirname)):
+            os.mkdir(os.path.dirname(dirname))
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 
@@ -51,10 +54,12 @@ class frameWriter(object):
         # save
         print("Saving the current frame to: {} and {}".format(self.rgb_path, self.data_path))
         cv2.imwrite(self.rgb_path, img_rgb[:,:,::-1])
-        np.savez(self.data_path, 
-            depth_frame=dep, 
-            **kwargs
-        )
+
+        # @note Yunzhi: We do not need it for now
+        # np.savez(self.data_path,
+        #     depth_frame=dep,
+        #     **kwargs
+        # )
 
         # update id number
         self.id+=1

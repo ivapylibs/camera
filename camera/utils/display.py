@@ -104,7 +104,7 @@ def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="Ope
     display_images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
     
 
-def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", 
+def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
         instruction="Press \'c\' key to confirm", ratio=None):
     """An interface function for letting the user select the desired frame \
         from the given sensor source. The function will display the color and the depth \
@@ -118,6 +118,7 @@ def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb",
                         rgb, depth = color_dep_getter() \
             When there is no more info, expected to return None
         color_type (str): The color type. RGB or BGR. Will be used for visualization
+        window_name (str):
         instruction ([type], optional): The instruction text printed to the user for selection. Defaults to None.
         ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
 
@@ -128,11 +129,14 @@ def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb",
     # get the next stream of data
     rgb, dep = rgb_dep_getter()
 
+    # Display instruction
+    print(instruction)
+
     # get started
     while((rgb is not None) and (dep is not None)):
 
         # visualization 
-        display_rgb_dep_cv(rgb, dep, window_name=instruction, ratio=ratio)
+        display_rgb_dep_cv(rgb, dep, window_name=window_name, ratio=ratio)
 
         # wait for confirm
         opKey = cv2.waitKey(1)
@@ -141,6 +145,8 @@ def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb",
         
         # if not confirm, then go to the next stream of data
         rgb, dep = rgb_dep_getter()
+
+    cv2.destroyWindow(window_name)
 
     return rgb, dep
 
