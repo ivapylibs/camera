@@ -55,7 +55,7 @@ def display_images_cv(images:list, ratio=None, window_name="OpenCV Display"):
     """Display a sequence of images
 
     Args:
-        images (list): A list of images of the same size
+        images (list): A list of the OpenCV images (bgr) of the same size
         window_name (str, Optional): The window name for display. Defaults to \"OpenCV display\"
     """
     # resize the imgs
