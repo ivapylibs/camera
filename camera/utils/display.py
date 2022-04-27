@@ -105,7 +105,7 @@ def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="Ope
     
 
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
-        instruction="Press \'c\' key to confirm", ratio=None):
+        instruction="Press \'c\' key to confirm. Press \'q\' key to quit the program", ratio=None):
     """An interface function for letting the user select the desired frame \
         from the given sensor source. The function will display the color and the depth \
         information received from the source, and then wait for the user to confirm via keyboard. 
@@ -142,6 +142,8 @@ def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "d
         opKey = cv2.waitKey(1)
         if opKey == ord('c'):
             break
+        elif opKey == ord('q'):
+            exit()
         
         # if not confirm, then go to the next stream of data
         rgb, dep = rgb_dep_getter()

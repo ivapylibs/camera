@@ -92,7 +92,7 @@ class vidWriter(object):
     collect all the depth frames, assemble them, and then stored into the destination file
     """
 
-    def __init__(self, dirname, vidname, W, H, activate=False, save_depth=False):
+    def __init__(self, dirname, vidname, W, H, activate=False, save_depth=False, FPS=20.0):
         self.activate = activate
         self.save_depth = save_depth
 
@@ -117,7 +117,7 @@ class vidWriter(object):
 
         # prepare video writer
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.out_color = cv2.VideoWriter(self.path_color, fourcc, 20.0, 
+        self.out_color = cv2.VideoWriter(self.path_color, fourcc, FPS, 
                     (self.W, self.H))
         self.cache_depths = np.empty(shape=[0, self.H, self.W]) # the depth shape would be aligned to the rgb shape
 
