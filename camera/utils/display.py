@@ -102,10 +102,11 @@ def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="Ope
 
     # diplay
     display_images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
-    
 
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
-        instruction="Press \'c\' key to select the frames. Press \'q\' to return None", ratio=None):
+        instruction="Press \'c\' key to select the frames. Press \'q\' to return None", 
+        capture_click = False,
+        ratio=None):
     """An interface function for letting the user select the desired frame \
         from the given sensor source. The function will display the color and the depth \
         information received from the source, and then wait for the user to confirm via keyboard. 
