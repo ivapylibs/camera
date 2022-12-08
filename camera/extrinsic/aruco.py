@@ -67,7 +67,7 @@ class CtoW_Calibrator_aruco():
         self.cache_occr = []
         self.cache_other_infos = []
 
-    def process(self, img, depth=None):
+    def process(self, rgb, depth=None):
         """
         Process function that calibrate the extrinsic matrix from the corresponding rgb and depth frame
 
@@ -86,7 +86,7 @@ class CtoW_Calibrator_aruco():
             """
             Not stabilize version, meaning calibrate with no memory
             """
-            M_CL_cur, other_infos = self.calibrate(img, depth)
+            M_CL_cur, other_infos = self.calibrate(rgb, depth)
             # if detect a new aruco in the non-stablize version, then simply replace the new result
             if M_CL_cur is not None:
                 self.M_CL = M_CL_cur
@@ -101,7 +101,7 @@ class CtoW_Calibrator_aruco():
             """
             self.stable_status = True
         else:
-            M_CL_cur, other_infos = self.calibrate(img, depth)
+            M_CL_cur, other_infos = self.calibrate(rgb, depth)
             if M_CL_cur is not None:
                 self.frame_counter = self.frame_counter + 1
                 self.detected = True
@@ -111,16 +111,16 @@ class CtoW_Calibrator_aruco():
             print(self.M_CL)
 
         if self.flag_vis_ext:
-            self._vis_ext(img)
+            self._vis_ext(rgb)
 
         return self.M_CL, self.corners_aruco, self.img_with_ext, self.detected
     
-    def calibrate(self, img, depth):
+    def calibrate(self, rgb, depth=None):
         '''
         Process a single frame
         '''
-        gray = img.astype(np.uint8)
-        M_CL, other_infos = self._get_M_CL(gray, img)
+        gray = rgb.astype(np.uint8)
+        M_CL, other_infos = self._get_M_CL(gray, rgb)
 
         return M_CL,other_infos
         
@@ -151,7 +151,7 @@ class CtoW_Calibrator_aruco():
         self.cameraMatrix = cameraMatrix
 
     # get transformation matrix from camera to the aruco tag
-    def _get_M_CL(self, gray, image_init):
+    def _get_M_CL(self, gray, rgb):
         '''
         Function: get the T matrix from camera to aruco tag
         :param gray:
@@ -163,6 +163,7 @@ class CtoW_Calibrator_aruco():
         # parameters
         #markerLength_CL = 0.076
         aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_5X5_250)
+        # aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
         #aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_6X6_250)
         parameters = aruco.DetectorParameters_create()
 
@@ -170,7 +171,7 @@ class CtoW_Calibrator_aruco():
 
         # for the first frame, it may contain nothing
         if ids_CL is None:
-            self.img_with_ext = copy.deepcopy(image_init)
+            self.img_with_ext = copy.deepcopy(rgb)
             return None, None
 
         # see the doc for explanation http://amroamroamro.github.io/mexopencv/matlab/cv.estimatePoseSingleMarkers.html
@@ -190,13 +191,13 @@ class CtoW_Calibrator_aruco():
         other_infos["tvec_CL"] = tvec_CL
         return M_CL, other_infos 
     
-    def _vis_ext(self, img):
-        image_copy = copy.deepcopy(img)
+    def _vis_ext(self, rgb):
+        bgr_copy = copy.deepcopy(rgb[:,:,::-1])
         if self.detected:
-            cv2.aruco.drawDetectedMarkers(image_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
-            aruco.drawAxis(image_copy, self.cameraMatrix, self.distCoeffs,
+            cv2.aruco.drawDetectedMarkers(bgr_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
+            aruco.drawAxis(bgr_copy, self.cameraMatrix, self.distCoeffs,
                 self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], self.markerLength_CL)
-        self.img_with_ext = image_copy
+        self.img_with_ext = bgr_copy[:,:,::-1] 
     
     def _same_ext_mat(self, M_CL1, M_CL2):
         #M_CL1_RT = M_CL1[:3, :]
