@@ -16,6 +16,6 @@ setup(
         "tqdm",
     ],
     extras_require={
-      "viz": ["pptk"]
+      "viz": ["mayavi", "wxpython"]
     }
 )
