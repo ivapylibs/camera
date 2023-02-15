@@ -16,9 +16,7 @@ import cv2
 from cv_bridge import CvBridge
 import rosbag
 
-import camera.d435.d435_runner as d435
 from camera.utils.display import display_rgb_dep_cv
-from camera.utils.writer_ros import vidWriter_ROS
 
 # the save_path from the command line
 default_path = os.path.join(

@@ -10,9 +10,7 @@
 ======================================= tabletop_plane =========================================
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-from numpy.core.fromnumeric import sort
 from sklearn.decomposition import PCA
 
 class tabletopPlaneEstimator():

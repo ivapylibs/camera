@@ -38,15 +38,17 @@ pip-compile --output-file=requirements-ubuntu1604.txt requirements-ubuntu1604.in
 
 ## Note:
 
-1. ```testing/d435_tabletop_plane.py``` dependency only available on Python 3.7.
+1. `python -m camera.d435.testing.tabletop_plane`
 
-   This testing file uses a 3d visualization package ```pptk``` that is only available for the python 3.7, which is for helping some undergrads understand the algorithm in a course. If you use the python 3.7 environment and want to run this file, please install the dependency first:
+   This testing file uses a 3d visualization package `mayavi`, which is for helping some undergrads understand the algorithm in a course.
+   If you use the python 3.7 environment and want to run this file, please install the dependency first:
 
    ```bash
-   pip install pptk
+   pip install -e .[viz]
    ```
 
-   The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation. You can skip that testing file and run the ```testing/d435_height.py``` directly. 
+   The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation.
+   You can skip that testing file and run `python -m camera.d435.testing.height` directly. 
 
    Or you can install the python 3.7 following the setups below and then install the ```pptk``` to run the plane visualization.
 
@@ -113,7 +115,7 @@ The suggested python version is python 3.7, because one of the package (```pptk`
    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
    
    sudo update-alternatives --config python
-   
+
    sudo update-alternatives  --set python /usr/bin/python3.7
    ```
 
