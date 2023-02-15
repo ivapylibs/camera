@@ -13,11 +13,11 @@ Install the following dependencies from the source, where the installation guide
 
 ```bash
 git clone https://github.com/ivapylibs/camera.git
-pip3 install -e camera/
+pip3 install -e camera[viz]
 ```
 
 If you are installing the package on Ubuntu Xenial (16.04), then install the requirements file into a virtual environment using python3.7+.
-This requirements file includes both `improcessor` and `pptk`. 
+This requirements file includes both `improcessor` and `viz`. 
 
 ```bash
 # configure the virtual environment
@@ -50,13 +50,10 @@ pip-compile --output-file=requirements-ubuntu1604.txt requirements-ubuntu1604.in
    The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation.
    You can skip that testing file and run `python -m camera.d435.testing.height` directly. 
 
-   Or you can install the python 3.7 following the setups below and then install the ```pptk``` to run the plane visualization.
-
-
 
 ## Ubuntu Python Environment Setup
 
-The suggested python version is python 3.7, because one of the package (```pptk```) used in the test script is only supported by the python 3.7. The remaining will use the python 3.7 as an example. Any other version is similar.
+Use the default python for your system. Here we go through an installation for Python 3.7.
 
 1. Install the Python 3.7
 
