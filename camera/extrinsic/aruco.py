@@ -10,8 +10,6 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import copy
-import sys
-import os
 
 class CtoW_Calibrator_aruco():
     """

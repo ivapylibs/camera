@@ -7,15 +7,12 @@
 
 """
 
-from struct import error
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import numpy as np
 import cv2
 
-import camera.d435.d435_runner as d435
+import camera.d435.runner as d435
 import camera.tabletop.tabletop_plane as tabletop_plane
-from camera.utils.display import display_rgb_dep_plt
 
 import camera.utils.display as display
 

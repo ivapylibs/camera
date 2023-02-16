@@ -10,9 +10,7 @@
 ======================================= tabletop_plane =========================================
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-from numpy.core.fromnumeric import sort
 from sklearn.decomposition import PCA
 
 class tabletopPlaneEstimator():
@@ -65,7 +63,7 @@ class tabletopPlaneEstimator():
         """
         Warning("This function uses the pptk for 3d point cloud visualization, which is only supported by the Python3.7. \
             The matplotlib can also visualize the point cloud, but it is very slow.")
-        import pptk
+        import mayavi.mlab as mlab
 
         point_clouds = None
         color_clouds = None
@@ -110,8 +108,10 @@ class tabletopPlaneEstimator():
         )
 
         # visualize
-        v = pptk.viewer(point_clouds)
-        v.attributes(color_clouds) 
+        mlab.figure(bgcolor=(0, 0, 0), size=(640, 480))
+        g = mlab.points3d(point_clouds[:, 0], point_clouds[:, 1], point_clouds[:, 2], mode="point")
+        g.mlab_source.dataset.point_data.scalars = color_clouds
+        mlab.show()
         
     
     def get_plane_params(self):

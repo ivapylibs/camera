@@ -15,8 +15,6 @@
 """
 
 import numpy as np
-from numpy.core.fromnumeric import sort
-from sklearn.decomposition import PCA
 
 from camera.tabletop.tabletop_plane import tabletopPlaneEstimator
 
