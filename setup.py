@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="camera",
@@ -6,7 +6,7 @@ setup(
     description="Classes implementing the runner interface for the commonly used cameras",
     url="https://github.com/ivapylibs/camera",
     author="IVALab",
-    packages=["camera"],
+    packages=find_packages(),
     install_requires=[
         "pyrealsense2",
         "numpy",
