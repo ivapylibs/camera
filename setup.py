@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="camera",
-    version="2.0.0",
+    version="2.1.0",
     description="Classes implementing the runner interface for the commonly used cameras",
     url="https://github.com/ivapylibs/camera",
     author="IVALab",

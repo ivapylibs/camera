@@ -9,7 +9,7 @@
 """
 
 import camera.d435.runner as d435
-from .d435_recorders import D435RecRosbag
+from camera.d435.recorders import D435RecRosbag
 
 
 # prepare

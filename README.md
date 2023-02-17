@@ -1,4 +1,5 @@
 # Camera
+
 Encaspulation of typical camera functionality.
 
 ## Install
@@ -17,7 +18,7 @@ pip3 install -e camera[viz]
 ```
 
 If you are installing the package on Ubuntu Xenial (16.04), then install the requirements file into a virtual environment using python3.7+.
-This requirements file includes both `improcessor` and `viz`. 
+This requirements file includes both `improcessor` and `viz`.
 
 ```bash
 # configure the virtual environment
@@ -48,8 +49,7 @@ pip-compile --output-file=requirements-ubuntu1604.txt requirements-ubuntu1604.in
    ```
 
    The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation.
-   You can skip that testing file and run `python -m camera.d435.testing.height` directly. 
-
+   You can skip that testing file and run `python -m camera.d435.testing.height` directly.
 
 ## Ubuntu Python Environment Setup
 
@@ -89,32 +89,31 @@ Use the default python for your system. Here we go through an installation for P
    # pip xx.x.x from /default/site-packages/path
    ```
 
-3. Change the default python3 version pip3  version (optional)
+3. Change the default python3 version pip3 version (optional)
 
-   Up until now every thing you run should be in the form of below **(include the commands in the install section above)**. Because if your system have multiple python versions, the ```python3``` or ```pip3``` command might not be linked to the one you want.
+   Up until now every thing you run should be in the form of below **(include the commands in the install section above)**. Because if your system have multiple python versions, the `python3` or `pip3` command might not be linked to the one you want.
 
    ```bash
    pip3.7 install SOMEPACKAGE
    python3.7 SOMESCRIPT.py
    ```
 
-   We can optionally create the symlink ```pip3``` and ```python3``` for our desired version so that you can use the following command instead:
+   We can optionally create the symlink `pip3` and `python3` for our desired version so that you can use the following command instead:
 
    ```bash
    pip3 install SOMEPACKAGE
    python3 SOMESCRIPT.py
    ```
 
-   One way to do it is to use the ```update-alternatives``` command (change the python version in the first two lines accordingly, and similar for the pip) :
+   One way to do it is to use the `update-alternatives` command (change the python version in the first two lines accordingly, and similar for the pip) :
 
    ```bash
    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1
    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
-   
+
    sudo update-alternatives --config python
 
    sudo update-alternatives  --set python /usr/bin/python3.7
    ```
 
    Alternatively, we can create an virtual environment using the [venv](https://docs.python.org/3/library/venv.html) or the [Anaconda](https://www.anaconda.com/) for the desired python version to avoid the this step.
-
