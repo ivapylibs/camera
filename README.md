@@ -17,26 +17,6 @@ git clone https://github.com/ivapylibs/camera.git
 pip3 install -e camera[viz]
 ```
 
-If you are installing the package on Ubuntu Xenial (16.04), then install the requirements file into a virtual environment using python3.7+.
-This requirements file includes both `improcessor` and `viz`.
-
-```bash
-# configure the virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# install dependencies
-pip install -r requirements-ubuntu1604.txt
-```
-
-If you need to update dependencies, update the `.in` file and run the following command:
-
-```bash
-# install pip-tools
-pip install pip-tools
-pip-compile --output-file=requirements-ubuntu1604.txt requirements-ubuntu1604.in
-```
-
 ## Note:
 
 1. `python -m camera.d435.testing.tabletop_plane`
