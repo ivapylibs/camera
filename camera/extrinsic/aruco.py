@@ -11,37 +11,52 @@ import cv2.aruco as aruco
 import numpy as np
 import copy
 
-class CtoW_Calibrator_aruco():
+class CtoW_Calibrator_aruco:
     """
-    A wrapper for the camera-to-workspace extrinsic matrix calibration (M_CL) with automatic 
+    A wrapper for the camera-to-workspace extrinsic matrix calibration (M_CL) with automatic
 
-    The camera intrinsic matrix and distortion coefficients should be obtained priorly
-    Currently the wrapper only supports the workspace origin being marked by one single aruco marker.
-    In case the calibration result is unstable, the wrapper updates the M_CL based on the result of each new frame 
-        Currently the updating method is simply counting the occurance of the calibration result for a consecutive frames
-        and then keeping the most frequent one. L2-distance is used to determine the equalness of two matrices
+    The camera intrinsic matrix and distortion coefficients should generally be obtained from the camera_info topic.
+    Currently the wrapper only supports the workspace origin being marked by one single aruco marker. In case the
+    calibration result is unstable, the wrapper updates the M_CL based on the result of each new frame. Currently the
+    updating method simply counts calibration results for consecutive frames and keeps the most frequent one.
+    L2-distance is used to determine the similarity of two matrices.
 
     The image and the camera coordinate systems are defined the same way as in the Realsense documentation:
     https://github.com/IntelRealSense/librealsense/blob/5e73f7bb906a3cbec8ae43e888f182cc56c18692/include/librealsense2/rsutil.h#L46
-
-
-    @param[in]  cameraMatrix            - The camera intrinsic matrix
-    @param[in]  distCoeffs              - The camera distortion matrix
-    @param[in]  markerLength_CL         - The marker side length in meters
-    @param[in]  stabilize_version       - stabilize_version version or not. When set to true, then only the first maxFrames number of frames will be used for calibration, 
-                                          and the result will be fixed for the future frames.
-    @param[in]  (optional)maxFrames     - The max frame number after which the M_CL updating ceases. If None, then will always update.
-                                          (Default: 5000)
-
     """
-    def __init__(self, cameraMatrix, markerLength_CL, \
-                    distCoeffs=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
-                    maxFrames=100, flag_vis_extrinsic=True, flag_print_MCL=True, 
-                    stabilize_version = True):
+
+    def __init__(
+        self,
+        cameraMatrix,
+        markerLength_CL,
+        distCoeffs=np.array([0.0, 0.0, 0.0, 0.0, 0.0]),
+        maxFrames=100,
+        flag_vis_extrinsic=True,
+        flag_print_MCL=True,
+        stabilize_version = True,
+        aruco_dict=aruco.DICT_5X5_250,
+    ):
+        """
+        The constructor of the CtoW_Calibrator_aruco class.
+
+        @param[in]  cameraMatrix                The camera intrinsic matrix
+        @param[in]  markerLength_CL             The marker side length in meters
+        @param[in]  (optional)distCoeffs        The camera distortion matrix (Default: np.array([0.0, 0.0, 0.0, 0.0, 0.0]))
+        @param[in]  (optional)maxFrames         The max frame number after which the M_CL updating ceases. If None, then
+                                                will always update. (Default: 5000)
+        @param[in]  (optional)flag_vis_ext      Whether to visualize the extrinsic frame on the image. (Default: True)
+        @param[in]  (optional)flag_print_MCL    Whether to print the M_CL. (Default: True)
+        @param[in]  (optional)stabilize_version Whether to stabilize_version version or not.
+                                                When set to true, then only the first maxFrames number of frames will be
+                                                used for calibration, and the result will be fixed for the future frames.
+                                                (Default: True)
+        @param[in]  (optional)aruco_dict        The aruco dictionary. (Default: aruco.DICT_5X5_250)
+        """
 
         self.cameraMatrix = cameraMatrix
         self.distCoeffs = distCoeffs
         self.markerLength_CL = markerLength_CL
+        self.aruco_dict = aruco_dict
 
         self.maxFrames = maxFrames
         self.frame_counter = 0
@@ -49,10 +64,10 @@ class CtoW_Calibrator_aruco():
         self.flag_vis_ext= flag_vis_extrinsic
         self.flag_print_MCL = flag_print_MCL
 
-        # calibration result. 
+        # calibration result.
         self.detected = False       # whether an Aruco has been detected
         self.M_CL = None
-        self.corners_aruco = None 
+        self.corners_aruco = None
         self.other_infos = {}  # for visualization
         self.img_with_ext = None    # use to store the image with the extrinsic frame drawn on it if self.flag_vis_ext
 
@@ -60,7 +75,7 @@ class CtoW_Calibrator_aruco():
         self.stabilize_version = stabilize_version
         self.stable_status = False
 
-        # cache list. M_CL and occurance number. Should be corresponded. 
+        # cache list. M_CL and occurance number. Should be corresponded.
         self.cache_M_CL = []
         self.cache_occr = []
         self.cache_other_infos = []
@@ -76,8 +91,8 @@ class CtoW_Calibrator_aruco():
         Returns:
             M_CL [np.ndarray, (4, 4)]. The extrinsic aruco-to-camera transformation matrix
             corners_aruco [np.ndarray]. The detected aruco tag corners
-            img_with_ext. [np.ndarray, (H, W, 3)]. The color image with the aruco tag coordinate. Useful for visualization. 
-                In the stablize version, if no aruco is detected, then will draw the 
+            img_with_ext. [np.ndarray, (H, W, 3)]. The color image with the aruco tag coordinate. Useful for visualization.
+                In the stablize version, if no aruco is detected, then will draw the
             status [binary]. True if an aruco is detected (non-stablize version) or a result has been stored (stablize version).
         """
         if not self.stabilize_version:
@@ -112,7 +127,7 @@ class CtoW_Calibrator_aruco():
             self._vis_ext(rgb)
 
         return self.M_CL, self.corners_aruco, self.img_with_ext, self.detected
-    
+
     def calibrate(self, rgb, depth=None):
         '''
         Process a single frame
@@ -121,7 +136,7 @@ class CtoW_Calibrator_aruco():
         M_CL, other_infos = self._get_M_CL(gray, rgb)
 
         return M_CL,other_infos
-        
+
     def update(self, M_CL_new, other_infos):
         flag_exist = False
         for idx, M_CL in enumerate(self.cache_M_CL):
@@ -156,15 +171,10 @@ class CtoW_Calibrator_aruco():
         :param image_init:
         :param visualize:
         param[out]       M_CL:  The extrinsic matrix. (4, 4). If no aruco is detected then will return the stored matrix
-        param[out] corners_CL:  The detected aruco corners in the image frame. (4, 2). If 
+        param[out] corners_CL:  The detected aruco corners in the image frame. (4, 2).
         '''
-        # parameters
-        #markerLength_CL = 0.076
-        aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_5X5_250)
-        # aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
-        #aruco_dict_CL = aruco.Dictionary_get(aruco.DICT_6X6_250)
+        aruco_dict_CL = aruco.Dictionary_get(self.aruco_dict)
         parameters = aruco.DetectorParameters_create()
-
         corners_CL, ids_CL, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict_CL, parameters=parameters)
 
         # for the first frame, it may contain nothing
@@ -175,8 +185,8 @@ class CtoW_Calibrator_aruco():
         # see the doc for explanation http://amroamroamro.github.io/mexopencv/matlab/cv.estimatePoseSingleMarkers.html
         rvec_CL, tvec_CL, _objPoints_CL = aruco.estimatePoseSingleMarkers(corners_CL[0], self.markerLength_CL,
                                                                           self.cameraMatrix, self.distCoeffs)
-        
-        dst_CL, _ = cv2.Rodrigues(rvec_CL) 
+
+        dst_CL, _ = cv2.Rodrigues(rvec_CL)
         M_CL = np.zeros((4, 4))
         M_CL[:3, :3] = dst_CL
         M_CL[:3, 3] = tvec_CL
@@ -187,21 +197,21 @@ class CtoW_Calibrator_aruco():
         other_infos["ids_CL"] = ids_CL
         other_infos["rvec_CL"] = rvec_CL
         other_infos["tvec_CL"] = tvec_CL
-        return M_CL, other_infos 
-    
+        return M_CL, other_infos
+
     def _vis_ext(self, rgb):
         bgr_copy = copy.deepcopy(rgb[:,:,::-1])
         if self.detected:
             cv2.aruco.drawDetectedMarkers(bgr_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
             aruco.drawAxis(bgr_copy, self.cameraMatrix, self.distCoeffs,
                 self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], self.markerLength_CL)
-        self.img_with_ext = bgr_copy[:,:,::-1] 
-    
+        self.img_with_ext = bgr_copy[:,:,::-1]
+
     def _same_ext_mat(self, M_CL1, M_CL2):
         #M_CL1_RT = M_CL1[:3, :]
         #M_CL2_RT = M_CL2[:3, :]
-        #L2_dist = np.linalg.norm(M_CL1_RT - M_CL2_RT) 
+        #L2_dist = np.linalg.norm(M_CL1_RT - M_CL2_RT)
         #print(L2_dist)
         #same = L2_dist > 1e-2
         same = np.allclose(M_CL1, M_CL2)
-        return same 
+        return same
