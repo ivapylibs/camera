@@ -13,8 +13,16 @@ class Base():
 
     Defines some shared functionality interfaces
     """
-    def __init__(self, configs) -> None:
+    def __init__(self, configs, K = None) -> None:
         self.configs = configs
+        if K is None:
+            self.K = np.identity(3)
+        else:
+            self.K = K
+
+
+    def set_intrinsic(self, K)
+        self.K = K
 
     def get_frames(self):
         """Get the next frames
@@ -50,5 +58,32 @@ class Base():
             value (Any): The value to be set
         """
         raise NotImplementedError
+
+
+
+class Color(Base):
+   '''!
+     Expands on base class to specialize to color images.
+     What might this do that is unique?
+   '''
+
+    #============================ Color __init___ ============================
+    #
+    def __init__(self, configs, K = None) -> None:
+        super().__init__(configs, K)
+
+
+
+class Grayscale(Base):
+   '''!
+     Expands on base class to specialize to color images.
+     What might this do that is unique?
+   '''
+
+    #============================ Color __init___ ============================
+    #
+    def __init__(self, configs, K = None) -> None:
+        super().__init__(configs, K)
+
 
 
