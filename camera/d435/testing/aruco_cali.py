@@ -1,3 +1,4 @@
+#================================= testing/aruco_cali ================================
 """!
     @brief          The testing script for the extrinsic calibration for the D435 camera
                     using an Aruco tag
@@ -5,6 +6,8 @@
     @author         Yiye Chen.          yychen2019@gatech.edu
     @date           10/08/2021
 """
+#================================= testing/aruco_cali ================================
+
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -38,16 +41,17 @@ calibrator_CtoW = CtoW_Calibrator_aruco(
 
 fh = plt.figure()
 while(True):
-    # get frames
+    # Get D435 frames
     rgb, dep, success = d435_starter.get_frames()
     if not success:
         print("Cannot get the camera signals. Exiting...")
         exit()
 
-    # calibrate
+    # Process for calibration
     M_CL, corners_aruco, img_with_ext, status = calibrator_CtoW.process(rgb, dep) 
 
-    # Bird-eye-view rectification
+
+    # Perform bird's-eye-view rectification
     if status is True:
         topDown_image, BEV_mat = BEV_rectify_aruco(rgb, corners_aruco,
                 target_size=200, mode="same") 
@@ -57,17 +61,16 @@ while(True):
         topDown_image = np.zeros_like(rgb, dtype=np.uint8)
 
 
-    # visualization
+    # Visualization
     display.display_images_cv([img_with_ext[:,:,::-1], topDown_image[:,:,::-1]], ratio=0.5, \
         window_name="The extrinsic calibration(right, the aruco frame) and the Bird-eye-view rectification(right). Press \'q\' to exit")
 
     display.display_images_cv([topDown_image2[:,:,::-1]], ratio=0.5, \
         window_name="The top-down view with the full size")
     
-
     opKey = cv2.waitKey(1)
     if opKey == ord('q'):
         break
 
-
-
+#
+#================================= testing/aruco_cali ================================

@@ -1,3 +1,4 @@
+#========================== camera/tabletop/height_estimator =========================
 """
     @brief: Estimate the height towards the perceived tabletop surface
 
@@ -13,6 +14,7 @@
                 10/25/2021[moved]
 
 """
+#========================== camera/tabletop/height_estimator =========================
 
 import numpy as np
 
@@ -96,5 +98,5 @@ class HeightEstimator(tabletopPlaneEstimator):
         T = plane_param[-1]
         return R, T
 
-        
-
+#
+#========================== camera/tabletop/height_estimator =========================

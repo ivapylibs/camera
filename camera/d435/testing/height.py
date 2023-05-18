@@ -1,3 +1,5 @@
+#=================================== testing/height ==================================
+#
 """
 
     @brief:     The demo of the tabletop height estimator on the Realsense d435
@@ -6,6 +8,7 @@
     @date:      10/26/2021
 
 """
+#=================================== testing/height ==================================
 
 from struct import error
 import matplotlib.pyplot as plt
@@ -13,7 +16,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import cv2
 
-import camera.d435.d435_runner as d435
+import camera.d435.runner as d435
 from camera.tabletop.height_estimator import HeightEstimator
 from camera.utils.display import display_rgb_dep_plt
 
@@ -32,18 +35,20 @@ d435_configs = d435.D435_Configs(
 d435_starter = d435.D435_Runner(d435_configs)
 
 # The tabletop plane estimator
-height_estimator = HeightEstimator(
-    intrinsic=d435_starter.intrinsic_mat
-)
+height_estimator = HeightEstimator(intrinsic=d435_starter.intrinsic_mat)
 
-# get started
+# Get started
 calibrated = False
 fh = plt.figure()
 ax = fh.add_subplot(1, 1, 1)
+
 divider = make_axes_locatable(ax)
-cax = divider.append_axes("right", size="5%", pad=0.05)
+cax     = divider.append_axes("right", size="5%", pad=0.05)
+
 plt.show(block=False)
 plt.ion()
+
+# Enter loop.
 while(True):
     rgb, dep, success = d435_starter.get_frames()
     #print("The camera gain: {}. The camera exposure: {}".format(d435_starter.get("gain"), d435_starter.get("exposure")))
@@ -51,7 +56,7 @@ while(True):
         print("Cannot get the camera signals. Exiting...")
         exit()
 
-    # calibration
+    # Wait for user to trigger calibration.
     if not calibrated:
         display.display_rgb_dep_cv(rgb, dep, ratio=0.5, \
             window_name="Please clear the table and press \"c\" to estimate the tabletop plane. \
@@ -65,14 +70,18 @@ while(True):
             height_estimator.calibrate(depth_map=dep)
             calibrated = True
             cv2.destroyAllWindows()
-    # height estimation
+
+    # Once calibrated, can perform height estimation.
     else:
         height_map = height_estimator.apply(dep)
-        ax.clear()
-        cax.clear()
+
+        #ax.clear()
+        #cax.clear()
         im = ax.imshow(height_map)
         ax.set_title("The estimated height")
         plt.colorbar(im, cax=cax)
         plt.draw()
         plt.pause(1)
 
+#
+#=================================== testing/height ==================================
