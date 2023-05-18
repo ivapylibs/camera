@@ -1,17 +1,15 @@
-"""
-
+"""!
     @brief          The testing script for the extrinsic calibration for the D435 camera
                     using an Aruco tag
 
     @author         Yiye Chen.          yychen2019@gatech.edu
     @date           10/08/2021
-
 """
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-import camera.d435.d435_runner as d435
+import camera.d435.runner as d435
 from camera.extrinsic.aruco import CtoW_Calibrator_aruco
 from camera.utils.utils import BEV_rectify_aruco 
 

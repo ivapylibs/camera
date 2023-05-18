@@ -7,6 +7,7 @@
 
 """
 
+import numpy as np
 
 class Base():
     """The base class for the camera runners
@@ -21,7 +22,7 @@ class Base():
             self.K = K
 
 
-    def set_intrinsic(self, K)
+    def set_intrinsic(self, K):
         self.K = K
 
     def get_frames(self):
@@ -62,11 +63,11 @@ class Base():
 
 
 class Color(Base):
-   '''!
-     Expands on base class to specialize to color images.
-     What might this do that is unique?
-   '''
+    '''!
+    @brief  Expands on base class to specialize to color images.
 
+    What might this do that is unique?
+    '''
     #============================ Color __init___ ============================
     #
     def __init__(self, configs, K = None) -> None:
@@ -76,13 +77,13 @@ class Color(Base):
 
 class Grayscale(Base):
    '''!
-     Expands on base class to specialize to color images.
-     What might this do that is unique?
+   @brief   Expands on base class to specialize to color images.
+     
+   What might this do that is unique?
    '''
-
-    #============================ Color __init___ ============================
-    #
-    def __init__(self, configs, K = None) -> None:
+   #============================ Color __init___ ============================
+   #
+   def __init__(self, configs, K = None) -> None:
         super().__init__(configs, K)
 
 
