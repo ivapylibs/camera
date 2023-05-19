@@ -24,6 +24,9 @@ ImportError: Could not import backend for traitsui.  Make sure you
 Install either pyqt5 (or wxpython) to resolve this error.
 
 ```bash
+# upgrade pip, or you may get stuck on license agreement
+# https://stackoverflow.com/questions/66546886/pip-install-stuck-on-preparing-wheel-metadata-when-trying-to-install-pyqt5
+pip install --upgrade pip
 pip install PyQt5
 ```
 
