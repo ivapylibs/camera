@@ -9,12 +9,42 @@
 
 import numpy as np
 
+from yacs.config import CfgNode
+
+class CfgCamera(CfgNode):
+    '''!
+
+    @brief  Configuration setting specifier for generic camera.
+
+    '''
+
+    #=============================== __init__ ==============================
+    #
+    '''!
+    @brief        Constructor of camera.
+
+    @param[in]    cfg_files   List of config files to load to merge settings.
+    '''
+    # 
+    # NOTE: NEEDS TO BE REDONE. TODO TODO.
+    #
+    def __init__(self, init_dict=None, key_list=None, new_allowed=True):
+      
+      super().__init__(init_dict, key_list, new_allowed)
+      # self.merge_from_lists(XX)
+
+
 class Base():
-    """The base class for the camera runners
+    """!
+    @brief  Base class for camera runners.
 
     Defines some shared functionality interfaces
     """
     def __init__(self, configs, K = None) -> None:
+        '''!
+        @brief  Base class instantiator for camera runners.
+
+        '''
         self.configs = configs
         if K is None:
             self.K = np.identity(3)
