@@ -53,6 +53,7 @@ class CfgD435(CfgNode):
 
       # self.merge_from_lists(XX)
 
+
     #========================= get_default_settings ========================
     #
     # @brief    Recover the default settings in a dictionary.
@@ -73,35 +74,61 @@ class CfgD435(CfgNode):
         @param[out] default_dict    Dictionary populated with minimal set of default settings.
         '''
         default_dict = dict( camera = dict ( 
-              loadConfig = False,
-              depth = dict(on = True, res = [848, 480], fps = 30),
-              color = dict(on = True , res = [1920, 1080], fps = 30) ,
-              align = False, exposure = None, gain = None ) )
+              config = dict(load = False, file = "", ros = ""),
+              depth  = dict(use = True, res = [848, 480], fps = 30),
+              color  = dict(use = True , res = [1920, 1080], fps = 30) ,
+              align  = False, exposure = None, gain = None ) )
         return default_dict
+
+    # @note Need to fix it so that defaults permit not using one of the streams.
+    #       Ignoring for now in the interest of progress.  Will need to circle
+    #       back eventually.
 
 
     
-#============================== D435_Runner ==============================
+#=============================== D435_Runner ===============================
 #
 
 class D435_Runner(base.Base):
     """D435_Runner
     """
 
+    #============================== __init__ =============================
+    #
     def __init__(self, configs=CfgD435()) -> None:
+        '''!
+        @brief  Constructor for Intel Realsense D435 camera interface.
+
+        @param[in]  configs     Settings to apply.
+        '''
         super().__init__(configs=configs)
 
         # Configure realsense depth and color streams
         self.pipeline = rs.pipeline()
         self.rs_config = rs.config()
 
-        if self.configs.camera.loadConfig:
+        if self.configs.camera.config.load:
+            import os
+            import json
+
+            pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
+            pipeline_profile = self.rs_config.resolve(pipeline_wrapper)
+            device = pipeline_profile.get_device()
+
             adv_mode = rs.rs400_advanced_mode(device)
             if not adv_mode.is_enabled():
                 print('Issues with advanced mode')
                 quit()
 
-            configFile = open(os.path.expanduser(self.configs.camera.config_file) )
+            if self.configs.camera.config.ros in (None,''):
+                configFile = open(os.path.expanduser(self.configs.camera.config.file) )
+            else:
+                import rospkg
+               
+                rpkg       = rospkg.RosPack()
+                pkgPath    = rpkg.get_path(self.configs.camera.config.ros)
+                configFile = os.path.join(pkgPath,self.configs.camera.config.file)
+
             configStr = json.load(configFile)
             configStr = str(configStr).replace("'", '\"')
             configFile.close()
@@ -112,12 +139,12 @@ class D435_Runner(base.Base):
         # @todo     NEED TO ADD IN JSON FILE LOADING OF DETAILED SETTINGS/CONFIGURATION.
 
         # Enable / start streaming 
-        if (self.configs.camera.depth.on):
+        if (self.configs.camera.depth.use):
           self.rs_config.enable_stream(rs.stream.depth,  \
                   self.configs.camera.depth.res[0], self.configs.camera.depth.res[1], \
                   rs.format.z16, self.configs.camera.depth.fps)
 
-        if (self.configs.camera.color.on):
+        if (self.configs.camera.color.use):
           self.rs_config.enable_stream(rs.stream.color, \
                   self.configs.camera.color.res[0], self.configs.camera.color.res[1], \
                   rs.format.bgr8, self.configs.camera.color.fps)
@@ -158,7 +185,34 @@ class D435_Runner(base.Base):
             self.get_frames()           # Run few times to initialize intrinsic. Not sure whether 
                                         # there are better approaches.
 
+    #=============================== start ===============================
+    #
+    def start(self):
+        '''!
+        @brief  Start capturing the stream.
+
+        @note   Right now the construction does this, which is poor design.
+        @todo   Should implement start/stop functionality and capture boolean.
+        '''
+        pass
+
+    #================================ stop ===============================
+    #
+    def start(self):
+        '''!
+        @brief  Stop capturing the stream.
+
+        @note   Right now not implemented.
+        @todo   Should implement start/stop functionality and capture boolean.
+        '''
+        pass
+
     #============================= get_frames ============================
+    #
+    # @todo Rename to "capture" so that it is agnostic to what is being
+    #       captured.  The setup should determine that and the code should
+    #       be consistent with the setup, or at least sanity check the
+    #       results (by checking for None when this code is upgraded).
     #
     def get_frames(self, before_scale=False):
         """!

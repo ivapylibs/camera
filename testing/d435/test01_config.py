@@ -3,6 +3,8 @@
 '''!
 @brief  Test out the configuration node class for the D435 camera.
 
+There are two test01 files, one for the CfgD435 class and one for the
+main D435 interface class.  This is the one for the configuration.
 '''
 #============================= test01_config =============================
 
@@ -17,19 +19,18 @@
 from camera.d435.runner2 import CfgD435
 
 
-x = dict( test=5, recurse = dict( x = 5, y = 6))
-print(x)
-
 defDict = CfgD435.get_default_settings()
+
+print('\nSettings as a dictionary for use by configuration node.')
 print(defDict)
 
-test1 = CfgD435(init_dict = defDict)
-print(test1)
+conf1 = CfgD435(init_dict = defDict)
+print('\nSettings as applied from dictionary for the configuration node.')
+print(conf1)
 
 print('\nAbove and below YAML setting specs should be the same.\n')
-
-test2 = CfgD435()
-print(test2)
+conf2 = CfgD435()
+print(conf2)
 
 
 #
