@@ -1,6 +1,9 @@
 #=============================== camera/d435 ===============================
 '''!
-@brief          The d435 camera runner.
+@brief          The Intel Realsense D435 camera runner.
+
+This class API serves as a simpler wrapper for the D435 python interface,
+which itself is a wrapper for the C++ implementation.
 
 '''
 #=============================== camera/d435 ===============================
@@ -21,14 +24,17 @@ import pyrealsense2 as rs
 import camera.base as base
 import camera.utils.rs_utils as rs_utils
 
+#================================ CfgD435 ================================
+#
 class CfgD435(CfgNode):
     '''!
 
     @brief  Configuration setting specifier for the D435 camera.
 
-    For detailed explanations and options, please refer to the D435 official document.
-    NOTE: The default depth resolution 848x480 is explained to be optimal for the d435 camera. 
-    See [realsense documentation](https://dev.intelrealsense.com/docs/tuning-depth-cameras-for-best-performance)
+    For detailed explanations and options, refer to official D435 documentation.
+
+
+    @note   Currently not using a CfgCamera super class. Probably best to do so.
     '''
 
     #=============================== __init__ ==============================
@@ -38,50 +44,64 @@ class CfgD435(CfgNode):
 
     @param[in]    cfg_files   List of config files to load to merge settings.
     '''
-    # exposure The camera exposure. Defaults to None, in which case will enable
-    # auto_exposure (if gain is also None) or use the default value 50
-    # (according to Yiye's test) 
-    # gain (int. Optional.) The camera gain.
-    # Defaults to None, in which case will enable auto_exposure (if gain is
-    # also None) or use the default value 64 (according to Yiye's test)
     def __init__(self, init_dict=None, key_list=None, new_allowed=True):
       
-      # SHOULD SET BASIC ELEMENTS FOR THE REALSENSE. HARD CODED AND NOT FROM
-      # A FILE.
-      # camera.depth_on  = False
-      # camera.depth_res = [848, 480]
-      # camera.depth_fps = 30
-      #
-      # camera.color_on  = True
-      # camera.color_res = [1920, 1080]
-      # camera.color_fps = 30
-      #
-      # exposure ???
-      # gain ???
-      #
+      if (init_dict == None):
+        init_dict = CfgD435.get_default_settings()
+
       super().__init__(init_dict, key_list, new_allowed)
 
       # self.merge_from_lists(XX)
 
+    #========================= get_default_settings ========================
+    #
+    # @brief    Recover the default settings in a dictionary.
+    #
+    # The default depth resolution 848x480 is explained to be optimal for the d435 camera. 
+    # See [realsense documentation](https://dev.intelrealsense.com/docs/tuning-depth-cameras-for-best-performance)
+    #
+    # The camera exposure defaults to None, in which case will enable auto_exposure (if gain 
+    # is also None) or use the default value 50 (according to Yiye's test).
+    # The camera gain defaults to None, in which case will enable auto_exposure (if gain is
+    # also None) or use the default value 64 (according to Yiye's test)
+    #
+    @staticmethod
+    def get_default_settings():
+        '''!
+        @brief  Defines most basic, default settings for RealSense D435.
+
+        @param[out] default_dict    Dictionary populated with minimal set of default settings.
+        '''
+        default_dict = dict( camera = dict ( 
+              loadConfig = False,
+              depth = dict(on = True, res = [848, 480], fps = 30),
+              color = dict(on = True , res = [1920, 1080], fps = 30) ,
+              align = False, exposure = None, gain = None ) )
+        return default_dict
+
+
     
+#============================== D435_Runner ==============================
+#
+
 class D435_Runner(base.Base):
     """D435_Runner
     """
 
-    def __init__(self, configs:camConfig=CfgD435()) -> None:
+    def __init__(self, configs=CfgD435()) -> None:
         super().__init__(configs=configs)
 
         # Configure realsense depth and color streams
         self.pipeline = rs.pipeline()
         self.rs_config = rs.config()
 
-        if self.settings.camera.loadConfig:
+        if self.configs.camera.loadConfig:
             adv_mode = rs.rs400_advanced_mode(device)
             if not adv_mode.is_enabled():
                 print('Issues with advanced mode')
                 quit()
 
-            configFile = open(os.path.expanduser(self.settings.camera.config_file) )
+            configFile = open(os.path.expanduser(self.configs.camera.config_file) )
             configStr = json.load(configFile)
             configStr = str(configStr).replace("'", '\"')
             configFile.close()
@@ -89,16 +109,18 @@ class D435_Runner(base.Base):
             print('Loaded JSON configuration and applying.')
             adv_mode.load_json(configStr)
 
-        # Enable / start streaming 
-        if (self.settings.camera.depth.on):
-          self.rs_config.enable_stream(rs.stream.depth,  \
-                  self.configs.depth.res(1), self.configs.depth.res(2), \
-                  rs.format.z16, self.settings.depth_fps)
+        # @todo     NEED TO ADD IN JSON FILE LOADING OF DETAILED SETTINGS/CONFIGURATION.
 
-        if (self.settngs.camera.color.on):
+        # Enable / start streaming 
+        if (self.configs.camera.depth.on):
+          self.rs_config.enable_stream(rs.stream.depth,  \
+                  self.configs.camera.depth.res[0], self.configs.camera.depth.res[1], \
+                  rs.format.z16, self.configs.camera.depth.fps)
+
+        if (self.configs.camera.color.on):
           self.rs_config.enable_stream(rs.stream.color, \
-                  self.configs.depth.res(1), self.configs.depth.res(2), \
-                  rs.format.bgr8, self.configs.depth.fps)
+                  self.configs.camera.color.res[0], self.configs.camera.color.res[1], \
+                  rs.format.bgr8, self.configs.camera.color.fps)
 
 
         # SHOULD THIS REALLY BE IN INIT?? OR SHOULD IT BE IN A START ROUTINE??
@@ -114,8 +136,9 @@ class D435_Runner(base.Base):
         # prepare depth2color aligner
 
         # HAVE THIS BE PART OF camera.align FLAG.
-        align_to = rs.stream.color
-        self.align = rs.align(align_to)
+        if (self.configs.camera.align):
+          align_to = rs.stream.color
+          self.align = rs.align(align_to)
 
         # set color sensor exposure & camera gain
         # NOTE:color sensor is always the second one: https://github.com/IntelRealSense/librealsense/issues/3558#issuecomment-549405382
@@ -124,18 +147,22 @@ class D435_Runner(base.Base):
         # NOTE:see all available options here:https://intelrealsense.github.io/librealsense/python_docs/_generated/pyrealsense2.option.html
         self.auto_exposure = True   #<- auto exposure mode
         self.color_sensor = self.profile.get_device().query_sensors()[1]
-        if self.configs.exposure is not None:
-            self.color_sensor.set_option(rs.option.exposure, self.configs.exposure)
-        if self.configs.gain is not None:
-            self.color_sensor.set_option(rs.option.gain, self.configs.gain)
+        if self.configs.camera.exposure is not None:
+            self.color_sensor.set_option(rs.option.exposure, self.configs.camera.exposure)
+        if self.configs.camera.gain is not None:
+            self.color_sensor.set_option(rs.option.gain, self.configs.camera.gain)
 
         # the 3-by-3 intrinsic matrix
-        self.intrinsic_mat = None       #<- Need to be set when the frame is get. Didn't find other methods
+        self.intrinsic_mat = None       # Need to set when frame gotten. Didn't find other methods
         for i in range(20):
-            self.get_frames()           #<- run several steps of get_frames to initialize the intrinsic. Not sure whether there are better methods
+            self.get_frames()           # Run few times to initialize intrinsic. Not sure whether 
+                                        # there are better approaches.
 
+    #============================= get_frames ============================
+    #
     def get_frames(self, before_scale=False):
-        """Get the next frames
+        """!
+        @brief  Get the next frame(s)
 
         Args:  
             before_scale (bool). Before the scaling. If True, will get the integer depth map before scaling.
@@ -150,7 +177,8 @@ class D435_Runner(base.Base):
         frames = self.pipeline.wait_for_frames()
 
         # align depth2color
-        frames = self.align.process(frames)
+        if (self.configs.camera.align):
+          frames = self.align.process(frames)
 
         # split depth and color. <class 'pyrealsense2.video_frame'>
         depth_frame = frames.get_depth_frame()
@@ -170,10 +198,14 @@ class D435_Runner(base.Base):
             depth_image = depth_raw
         else:
             depth_image = depth_raw * self.depth_scale
+
         color_image = np.asanyarray(color_frame.get_data())[:,:,::-1]   #<- bgr to rgb
 
         return color_image, depth_image, True
     
+    #================================ get ================================
+    #
+    # @todo     Need to recode this part.  It is not up to date.
     def get(self, key):
         """Get attributes specified by the key
 
@@ -192,3 +224,6 @@ class D435_Runner(base.Base):
             value = eval("self." + key)
 
         return value
+
+#
+#=============================== camera/d435 ===============================
