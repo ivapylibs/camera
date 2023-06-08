@@ -25,7 +25,7 @@ import camera.utils.display as display
 import camera.d435.runner2 as d435
 
 
-d435_starter = d435.D435_Runner(d435_configs)
+d435_starter = d435.D435_Runner()
 d435_starter.start()
 
 

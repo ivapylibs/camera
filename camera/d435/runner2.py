@@ -1,4 +1,4 @@
-#=============================== camera/d435 ===============================
+#=================================== camera/d435 ===================================
 '''!
 @brief          The Intel Realsense D435 camera runner.
 
@@ -6,17 +6,18 @@ This class API serves as a simpler wrapper for the D435 python interface,
 which itself is a wrapper for the C++ implementation.
 
 '''
-#=============================== camera/d435 ===============================
+#=================================== camera/d435 ===================================
 #
 # @author         Yiye Chen.          yychen2019@gatech.edu
 # @author         Patricio A. Vela    pvela@gatech.edu
 # @date           [created] 10/07/2021
 #
 # NOTE: python 4 space indent. tab converts to 4 spaces. 100 columns.
+#
+#=================================== camera/d435 ===================================
 
 from dataclasses import dataclass
 from yacs.config import CfgNode
-
 
 import numpy as np
 import pyrealsense2 as rs
@@ -24,7 +25,10 @@ import pyrealsense2 as rs
 import camera.base as base
 import camera.utils.rs_utils as rs_utils
 
-#================================ CfgD435 ================================
+import camera.utils.display as display
+
+
+#================================== CfgD435 ==================================
 #
 class CfgD435(CfgNode):
     '''!
@@ -32,7 +36,6 @@ class CfgD435(CfgNode):
     @brief  Configuration setting specifier for the D435 camera.
 
     For detailed explanations and options, refer to official D435 documentation.
-
 
     @note   Currently not using a CfgCamera super class. Probably best to do so.
     '''
@@ -103,16 +106,21 @@ class D435_Runner(base.Base):
         '''
         super().__init__(configs=configs)
 
-        # Configure realsense depth and color streams
+        self.Kdepth = None
+
+        # Configure realsense depth and color streams. Load file if specified.
         self.pipeline = rs.pipeline()
         self.rs_config = rs.config()
+
+        pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
+        pipeline_profile = self.rs_config.resolve(pipeline_wrapper)
+        self.profile = pipeline_profile
+
 
         if self.configs.camera.config.load:
             import os
             import json
 
-            pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
-            pipeline_profile = self.rs_config.resolve(pipeline_wrapper)
             device = pipeline_profile.get_device()
 
             adv_mode = rs.rs400_advanced_mode(device)
@@ -136,54 +144,41 @@ class D435_Runner(base.Base):
             print('Loaded JSON configuration and applying.')
             adv_mode.load_json(configStr)
 
-        # @todo     NEED TO ADD IN JSON FILE LOADING OF DETAILED SETTINGS/CONFIGURATION.
-
-        # Enable / start streaming 
+        # Configure streaming sources.
         if (self.configs.camera.depth.use):
           self.rs_config.enable_stream(rs.stream.depth,  \
                   self.configs.camera.depth.res[0], self.configs.camera.depth.res[1], \
                   rs.format.z16, self.configs.camera.depth.fps)
+
+          # Recover depth scale to convert sensor units to meters.
+          depth_sensor      = self.profile.get_device().first_depth_sensor()
+          self.depth_scale  = depth_sensor.get_depth_scale()
+          self.depth_sensor = depth_sensor
 
         if (self.configs.camera.color.use):
           self.rs_config.enable_stream(rs.stream.color, \
                   self.configs.camera.color.res[0], self.configs.camera.color.res[1], \
                   rs.format.bgr8, self.configs.camera.color.fps)
 
+        # Set color sensor exposure & camera gain
+        # The color sensor is always [the second one](https://github.com/IntelRealSense/librealsense/issues/3558#issuecomment-549405382)
+        # auto_exposure will automatically set both the gain and the exposure. 
+        # Setting the exposure or gain will [automatically disable exposure](https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras)
+        # See all available options [here](https://intelrealsense.github.io/librealsense/python_docs/_generated/pyrealsense2.option.html)
 
-        # SHOULD THIS REALLY BE IN INIT?? OR SHOULD IT BE IN A START ROUTINE??
-        # I PREFER A START ROUTINE.
-
-        # Start streaming
-        self.profile = self.pipeline.start(self.rs_config)
-
-        # prepare depth scale: convert sensor unit to meters
-        depth_sensor = self.profile.get_device().first_depth_sensor()
-        self.depth_scale = depth_sensor.get_depth_scale()
-
-        # prepare depth2color aligner
-
-        # HAVE THIS BE PART OF camera.align FLAG.
-        if (self.configs.camera.align):
-          align_to = rs.stream.color
-          self.align = rs.align(align_to)
-
-        # set color sensor exposure & camera gain
-        # NOTE:color sensor is always the second one: https://github.com/IntelRealSense/librealsense/issues/3558#issuecomment-549405382
-        # NOTE: auto_exposure will automatically set both the gain and the exposure. 
-        # Setting the exposure or gain will automatically disable exposure. See: https://dev.intelrealsense.com/docs/high-dynamic-range-with-stereoscopic-depth-cameras
-        # NOTE:see all available options here:https://intelrealsense.github.io/librealsense/python_docs/_generated/pyrealsense2.option.html
         self.auto_exposure = True   #<- auto exposure mode
         self.color_sensor = self.profile.get_device().query_sensors()[1]
+
         if self.configs.camera.exposure is not None:
             self.color_sensor.set_option(rs.option.exposure, self.configs.camera.exposure)
+            self.auto_exposure = False
+
         if self.configs.camera.gain is not None:
             self.color_sensor.set_option(rs.option.gain, self.configs.camera.gain)
+            self.auto_exposure = False
 
-        # the 3-by-3 intrinsic matrix
-        self.intrinsic_mat = None       # Need to set when frame gotten. Didn't find other methods
-        for i in range(20):
-            self.get_frames()           # Run few times to initialize intrinsic. Not sure whether 
-                                        # there are better approaches.
+
+
 
     #=============================== start ===============================
     #
@@ -194,11 +189,33 @@ class D435_Runner(base.Base):
         @note   Right now the construction does this, which is poor design.
         @todo   Should implement start/stop functionality and capture boolean.
         '''
-        pass
+
+        # Start streaming
+        self.profile = self.pipeline.start(self.rs_config)
+
+        # Once started, the camera intrinsics are available.
+        # @note Not sure how well code works for multiple cameras. Assuming one for now.
+        if (self.configs.camera.color.use):
+          profile = self.profile.get_stream(rs.stream.color)            # Fetch color profile
+          intr    = profile.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
+          KMat    = rs_utils.rs_intrin_to_M(intr)
+          self.K  = KMat
+
+        if (self.configs.camera.depth.use):
+          profile = self.profile.get_stream(rs.stream.depth)            # Fetch depth profile
+          intr    = profile.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
+          KMat    = rs_utils.rs_intrin_to_M(intr)
+          self.Kdepth = KMat
+
+        # HAVE THIS BE PART OF camera.align FLAG.
+        if (self.configs.camera.align):
+          align_to   = rs.stream.color
+          self.align = rs.align(align_to)
+
 
     #================================ stop ===============================
     #
-    def start(self):
+    def stop(self):
         '''!
         @brief  Stop capturing the stream.
 
@@ -230,41 +247,53 @@ class D435_Runner(base.Base):
         # Wait for a coherent pair of frames: depth and color
         frames = self.pipeline.wait_for_frames()
 
-        # align depth2color
+        # Align depth to color if enabled prior to starting.
         if (self.configs.camera.align):
-          frames = self.align.process(frames)
+            frames = self.align.process(frames)
 
         # split depth and color. <class 'pyrealsense2.video_frame'>
-        depth_frame = frames.get_depth_frame()
-        color_frame = frames.get_color_frame()
-        if not depth_frame or not color_frame:
-            return None, None, False
-            
-        # update the intrinsic matrix stored in the calibrator, in case of the camera profile change
-        if self.intrinsic_mat is None:
-            intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
-            intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
-            self.intrinsic_mat = intrinsic_Mat
-
         # Convert realsense images to numpy arrays. Depth image in meters
-        depth_raw = np.asanyarray(depth_frame.get_data())
-        if before_scale:
-            depth_image = depth_raw
+        allGood = True
+        if (self.configs.camera.depth.use):
+            depth_frame = frames.get_depth_frame()
+            if not depth_frame:
+                allGood = False
+            else:
+                depth_raw = np.asanyarray(depth_frame.get_data())
+                if before_scale:
+                    depth_image = depth_raw
+                else:
+                    depth_image = depth_raw * self.depth_scale
         else:
-            depth_image = depth_raw * self.depth_scale
+            depth_image = None
 
-        color_image = np.asanyarray(color_frame.get_data())[:,:,::-1]   #<- bgr to rgb
+        if (self.configs.camera.color.use):
+            color_frame = frames.get_color_frame()
+            if not color_frame:
+                allGood = False
+            else:
+                color_image = np.asanyarray(color_frame.get_data())[:,:,::-1] # BGR to RGB
+        else:
+            color_image = None
 
-        return color_image, depth_image, True
+        # Update intrinsic matrix stored in calibrator, in case of camera profile change.
+        #if self.K is None:
+        #    intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
+        #    intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+        #    self.K = intrinsic_Mat
+
+        return color_image, depth_image, allGood
     
     #================================ get ================================
+    #
+    # @brief    Get attributes based on keys.
     #
     # @todo     Need to recode this part.  It is not up to date.
     def get(self, key):
         """Get attributes specified by the key
 
         Args:
-            key (str):      Choices: [exposure, gain, W_rgb, H_rgb, W_dep, H_dep, depth_scale, intrinsic_mat]
+            key (str):      Choices: [exposure, gain, W_rgb, H_rgb, W_dep, H_dep, depth_scale, K]
         Returns:
             value
         """
@@ -279,5 +308,16 @@ class D435_Runner(base.Base):
 
         return value
 
+    #================================= display =================================
+    #
+    # @brief    Display latest frames.
+    #
+    def display(self, rgb, depth):
+
+        display.display_rgb_dep_cv(rgb, dep, ratio=0.5, \
+                   window_name="Camera signals. Press \'q\' to exit")
+
+
+
 #
-#=============================== camera/d435 ===============================
+#=================================== camera/d435 ===================================

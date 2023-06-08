@@ -103,6 +103,61 @@ def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="Ope
     # diplay
     display_images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
 
+def display_dep_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
+
+    '''!
+    @brief  Display depth image using OpenCV window.
+
+    The depth frame will be scaled to have the range 0-255.
+    There will be no color bar for the depth
+
+    Args:
+        depth (np.ndarray, (H, W)): The depth map
+        depth_clip (float in [0, 1]): The depth value clipping percentage. The top and bottom extreme depth value to remove. Default to 0.0 (no clipping)
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    # Apply depth clipping if requested.
+    # Convert depth to cv2 image format: scale to 255, convert to 3-channel
+    if depth_clip > 0:
+        assert depth_clip < 0.5
+        improc = improcessor.basic(improcessor.basic.clipTails,(depth_clip,))
+        depth_show = improc.apply(depth)
+        depth_color = cv2.applyColorMap(cv2.convertScaleAbs(depth_show, alpha=255./depth_show.max(), beta=0), cv2.COLORMAP_JET)
+    else:
+        depth_color = cv2.applyColorMap(cv2.convertScaleAbs(depth, alpha=255./depth.max(), beta=0), cv2.COLORMAP_JET)
+
+    # Rescale if requested.
+    if ratio is not None: 
+        H, W = depth.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        depth_color = cv2.resize(depth_color, (W_vis, H_vis))
+
+    # Display colorized depth image.
+    cv2.imshow(window_name, depth_color[:,:,::-1])
+
+def display_rgb_cv(rgb, ratio=None, window_name="OpenCV Display"):
+
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = rgb.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        rgb_vis = cv2.resize(rgb, (W_vis, H_vis))
+        cv2.imshow(window_name, rgb_vis[:,:,::-1])
+    else:
+        cv2.imshow(window_name, rgb[:,:,::-1])
+
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
         instruction="Press \'c\' key to select the frames. Press \'q\' to return None", 
         capture_click = False,
