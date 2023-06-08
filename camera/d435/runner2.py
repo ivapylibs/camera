@@ -178,7 +178,7 @@ class D435_Runner(base.Base):
             self.color_sensor.set_option(rs.option.gain, self.configs.camera.gain)
             self.auto_exposure = False
 
-
+        self.align = None;
 
 
     #=============================== start ===============================
