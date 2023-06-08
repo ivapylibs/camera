@@ -107,6 +107,7 @@ class D435_Runner(base.Base):
         super().__init__(configs=configs)
 
         self.Kdepth = None
+        self.gDC    = None
 
         # Configure realsense depth and color streams. Load file if specified.
         self.pipeline = rs.pipeline()
@@ -196,21 +197,23 @@ class D435_Runner(base.Base):
         # Once started, the camera intrinsics are available.
         # @note Not sure how well code works for multiple cameras. Assuming one for now.
         if (self.configs.camera.color.use):
-          profile = self.profile.get_stream(rs.stream.color)            # Fetch color profile
-          intr    = profile.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
-          KMat    = rs_utils.rs_intrin_to_M(intr)
-          self.K  = KMat
+            profC   = self.profile.get_stream(rs.stream.color)          # Fetch color profile
+            intr    = profC.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
+            self.K  = rs_utils.rs_intrin_to_M(intr)
 
         if (self.configs.camera.depth.use):
-          profile = self.profile.get_stream(rs.stream.depth)            # Fetch depth profile
-          intr    = profile.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
-          KMat    = rs_utils.rs_intrin_to_M(intr)
-          self.Kdepth = KMat
+            profD   = self.profile.get_stream(rs.stream.depth)          # Fetch depth profile
+            intr    = profD.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
+            self.Kdepth = rs_utils.rs_intrin_to_M(intr)
+
+            if (self.configs.camera.color.use):                         # Fetch D/C extrinsic
+                extr = profD.get_extrinsics_to(profC) 
+                gDC  = rs_utils.rs_extrin_to_M(extr)
 
         # HAVE THIS BE PART OF camera.align FLAG.
         if (self.configs.camera.align):
-          align_to   = rs.stream.color
-          self.align = rs.align(align_to)
+            align_to   = rs.stream.color
+            self.align = rs.align(align_to)
 
 
     #================================ stop ===============================
