@@ -107,7 +107,7 @@ class D435_Runner(base.Base):
         super().__init__(configs=configs)
 
         self.Kdepth = None
-        self.gDC    = None
+        self.gCD    = None
 
         # Configure realsense depth and color streams. Load file if specified.
         self.pipeline = rs.pipeline()
@@ -202,13 +202,16 @@ class D435_Runner(base.Base):
             self.K  = rs_utils.rs_intrin_to_M(intr)
 
         if (self.configs.camera.depth.use):
-            profD   = self.profile.get_stream(rs.stream.depth)          # Fetch depth profile
-            intr    = profD.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
-            self.Kdepth = rs_utils.rs_intrin_to_M(intr)
+            if (self.configs.camera.align):
+                self.Kdepth = self.K                                        # Depth = color 
+            else:
+                profD   = self.profile.get_stream(rs.stream.depth)          # Fetch depth profile
+                intr    = profD.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
+                self.Kdepth = rs_utils.rs_intrin_to_M(intr)
 
-            if (self.configs.camera.color.use):                         # Fetch D/C extrinsic
-                extr = profD.get_extrinsics_to(profC) 
-                gDC  = rs_utils.rs_extrin_to_M(extr)
+            if (self.configs.camera.color.use):                         # Fetch g^C_D extrinsic
+                extr      = profD.get_extrinsics_to(profC) 
+                self.gCD  = rs_utils.rs_extrin_to_M(extr)
 
         # HAVE THIS BE PART OF camera.align FLAG.
         if (self.configs.camera.align):
