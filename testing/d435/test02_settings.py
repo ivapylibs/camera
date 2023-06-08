@@ -21,6 +21,7 @@ import camera.d435.runner2 as d435
 d435_configs = d435.CfgD435()
 d435_configs.merge_from_file('test02_setup.yaml')
 d435_starter = d435.D435_Runner(d435_configs)
+d435_starter.start()
 
 while(True):
     rgb, dep, success = d435_starter.get_frames()
