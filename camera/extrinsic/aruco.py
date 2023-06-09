@@ -194,7 +194,7 @@ class CtoW_Calibrator_aruco():
         image_copy = copy.deepcopy(img)
         if self.detected:
             cv2.aruco.drawDetectedMarkers(image_copy, self.other_infos["corners_aruco"], self.other_infos["ids_CL"])
-            aruco.drawAxis(image_copy, self.cameraMatrix, self.distCoeffs,
+            cv2.drawFrameAxes(image_copy, self.cameraMatrix, self.distCoeffs,
                 self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], self.markerLength_CL)
         self.img_with_ext = image_copy
     
