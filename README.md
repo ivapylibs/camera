@@ -1,4 +1,5 @@
 # Camera
+
 Encaspulation of typical camera functionality.
 
 ## Install
@@ -11,32 +12,28 @@ Install the following dependencies from the source, where the installation guide
 
 ### Install
 
-```
+```bash
 git clone https://github.com/ivapylibs/camera.git
-pip3 install -e camera/
+pip3 install -e camera[viz]
 ```
-
-
 
 ## Note:
 
-1. ```testing/d435_tabletop_plane.py``` dependency only available on Python 3.7.
+1. `python -m camera.d435.testing.tabletop_plane`
 
-   This testing file uses a 3d visualization package ```pptk``` that is only available for the python 3.7, which is for helping some undergrads understand the algorithm in a course. If you use the python 3.7 environment and want to run this file, please install the dependency first:
+   This testing file uses a 3d visualization package `mayavi`, which is for helping some undergrads understand the algorithm in a course.
+   If you use the python 3.7 environment and want to run this file, please install the dependency first:
 
    ```bash
-   pip install pptk
+   pip install -e .[viz]
    ```
 
-   The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation. You can skip that testing file and run the ```testing/d435_height.py``` directly. 
-
-   Or you can install the python 3.7 following the setups below and then install the ```pptk``` to run the plane visualization.
-
-
+   The test file visualize the extracted tabletop plane point cloud in the camera frame, which is a necessary step for the height estimation.
+   You can skip that testing file and run `python -m camera.d435.testing.height` directly.
 
 ## Ubuntu Python Environment Setup
 
-The suggested python version is python 3.7, because one of the package (```pptk```) used in the test script is only supported by the python 3.7. The remaining will use the python 3.7 as an example. Any other version is similar.
+Use the default python for your system. Here we go through an installation for Python 3.7.
 
 1. Install the Python 3.7
 
@@ -72,32 +69,31 @@ The suggested python version is python 3.7, because one of the package (```pptk`
    # pip xx.x.x from /default/site-packages/path
    ```
 
-3. Change the default python3 version pip3  version (optional)
+3. Change the default python3 version pip3 version (optional)
 
-   Up until now every thing you run should be in the form of below **(include the commands in the install section above)**. Because if your system have multiple python versions, the ```python3``` or ```pip3``` command might not be linked to the one you want.
+   Up until now every thing you run should be in the form of below **(include the commands in the install section above)**. Because if your system have multiple python versions, the `python3` or `pip3` command might not be linked to the one you want.
 
    ```bash
    pip3.7 install SOMEPACKAGE
    python3.7 SOMESCRIPT.py
    ```
 
-   We can optionally create the symlink ```pip3``` and ```python3``` for our desired version so that you can use the following command instead:
+   We can optionally create the symlink `pip3` and `python3` for our desired version so that you can use the following command instead:
 
    ```bash
    pip3 install SOMEPACKAGE
    python3 SOMESCRIPT.py
    ```
 
-   One way to do it is to use the ```update-alternatives``` command (change the python version in the first two lines accordingly, and similar for the pip) :
+   One way to do it is to use the `update-alternatives` command (change the python version in the first two lines accordingly, and similar for the pip) :
 
    ```bash
    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1
    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
-   
+
    sudo update-alternatives --config python
-   
+
    sudo update-alternatives  --set python /usr/bin/python3.7
    ```
 
    Alternatively, we can create an virtual environment using the [venv](https://docs.python.org/3/library/venv.html) or the [Anaconda](https://www.anaconda.com/) for the desired python version to avoid the this step.
-

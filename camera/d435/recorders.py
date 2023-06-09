@@ -8,11 +8,9 @@
 """
 
 import cv2
-import numpy as np
 import os
-import argparse
 
-import camera.d435.d435_runner as d435
+import camera.d435.runner as d435
 import camera.utils.display as display
 from camera.utils.writer_ros import vidWriter_ROS
 

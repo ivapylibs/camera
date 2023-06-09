@@ -8,16 +8,12 @@
 
 import os
 import argparse
-import cv2
 import numpy as np
 
 from cv_bridge import CvBridge
 import rosbag
 
-import sys
-sys.path.append("/home/cyy/Research/ivapylibs/camera/camera")
-from utils.writer_ros import vidWriter_ROS
-#from camera.utils.writer_ros import vidWriter_ROS
+from camera.utils.writer_ros import vidWriter_ROS
 
 # the save_path from the command line
 load_path_default = os.path.join(
