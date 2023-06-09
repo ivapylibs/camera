@@ -204,16 +204,16 @@ class D435_Runner(base.Base):
         if (self.configs.camera.depth.use):
             if (self.configs.camera.align):
                 self.Kdepth = self.K                                        # Depth = color 
+                self.gCD    = np.eye(4);
             else:
                 profD   = self.profile.get_stream(rs.stream.depth)          # Fetch depth profile
                 intr    = profD.as_video_stream_profile().get_intrinsics()  # Fetch intrinsics
                 self.Kdepth = rs_utils.rs_intrin_to_M(intr)
 
-            if (self.configs.camera.color.use):                         # Fetch g^C_D extrinsic
-                extr      = profD.get_extrinsics_to(profC) 
-                self.gCD  = rs_utils.rs_extrin_to_M(extr)
+                if (self.configs.camera.color.use):                         # g^C_D extrinsic
+                    extr      = profD.get_extrinsics_to(profC) 
+                    self.gCD  = rs_utils.rs_extrin_to_M(extr)
 
-        # HAVE THIS BE PART OF camera.align FLAG.
         if (self.configs.camera.align):
             align_to   = rs.stream.color
             self.align = rs.align(align_to)
