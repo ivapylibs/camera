@@ -158,6 +158,33 @@ def display_rgb_cv(rgb, ratio=None, window_name="OpenCV Display"):
     else:
         cv2.imshow(window_name, rgb[:,:,::-1])
 
+
+#============================== binary_cv ==============================
+#
+def binary_cv(bIm, ratio=None, window_name="Binary"):
+    '''!
+    @brief  Display binary image using OpenCV display routines.
+
+    The binary frame will be resized as indicated prior to visualization.
+
+    @param[in]  bIm     Binary image as a numpy H x W ndarray.
+    @param[in]  ratio   Resize ratio of image to display (float, optional).
+                        Default is None = no resizing.
+    @param[in]  window_name     Window display name (Default = "Binary").    
+    '''
+
+    cIm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
+
+    if ratio is not None:                                   # Resize if requested.
+        H, W = bIm.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        cIm = cv2.resize(cIm, (W_vis, H_vis))
+        cv2.imshow(window_name, cIm)
+    else:
+        cv2.imshow(window_name, cIm)
+
+
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
         instruction="Press \'c\' key to select the frames. Press \'q\' to return None", 
         capture_click = False,
