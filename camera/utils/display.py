@@ -137,13 +137,12 @@ def display_dep_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Displ
     # Display colorized depth image.
     cv2.imshow(window_name, depth_color[:,:,::-1])
 
-def display_rgb_cv(rgb, ratio=None, window_name="OpenCV Display"):
+def rgb_cv(rgb, ratio=None, window_name="Image"):
 
     '''!
     @brief  Display rgb image using the OpenCV
 
     The rgb frame will be resized to a visualization size prior to visualization.
-
     Args:
         rgb (np.ndarray, (H, W, 3)): The rgb image
         ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
@@ -158,6 +157,26 @@ def display_rgb_cv(rgb, ratio=None, window_name="OpenCV Display"):
     else:
         cv2.imshow(window_name, rgb[:,:,::-1])
 
+
+#============================ rgb_binary_cv ============================
+#
+def rgb_binary_cv(cIm, bIm, ratio=None, window_name="Color+Binary"):
+    """!
+    @brief  Display an RGB and binar image side-by-side using OpenCV API.
+
+    The images will be resized as indicated by the ratio and concatenated
+    horizontally. The concatenated image is what gets displayed in the window.
+
+    @param[in]  cIm             Color image (RGB).
+    @param[in]  bIm             Binary image (0/1 or logical)
+    @param[in]  ratio           Resizing ratio.
+    @param[in]  window_name     Window name for display.
+    """
+
+    cBm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
+
+    display_images_cv((cIm[:,:,::-1], cBm), ratio=ratio, 
+                                            window_name=window_name)
 
 #============================== binary_cv ==============================
 #
