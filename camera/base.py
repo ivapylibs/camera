@@ -7,9 +7,17 @@
 
 """
 
+
+from dataclasses import dataclass
 import numpy as np
 
 from yacs.config import CfgNode
+
+@dataclass
+class ImageRGBD:
+  color: any = None
+  depth: any = None
+
 
 class CfgCamera(CfgNode):
     '''!

@@ -24,6 +24,8 @@ import pyrealsense2 as rs
 
 import camera.base as base
 import camera.utils.rs_utils as rs_utils
+from camera.base import ImageRGBD
+
 
 import camera.utils.display as display
 
@@ -290,6 +292,27 @@ class D435_Runner(base.Base):
 
         return color_image, depth_image, allGood
     
+    #============================ captureRGBD ============================
+    #
+    #
+    def captureRGBD(self, before_scale=False):
+        """!
+        @brief  Snag the next set of RGB and D frames. 
+
+        Captures the color and depth pair as an RGBD image instance. The depth
+        map should be returned in standard units (meters).
+
+        @param[in]  before_scale    [bool] True = integer depth map before scaling.
+
+        @param[out] data        RGBD image data as an ImageRGBD element.
+        @param[out] flSuccess   Success flag. True = both frames fetched.
+        """
+
+        theImage = ImageRGBD()
+        theImage.color, theImage.depth, flSuccess = self.get_frames(before_scale)
+
+        return (theImage, flSuccess)
+
     #================================ get ================================
     #
     # @brief    Get attributes based on keys.

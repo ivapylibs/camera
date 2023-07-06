@@ -51,14 +51,136 @@ def display_rgb_dep_plt(rgb, depth, suptitle=None, figsize=(10,5), fh=None):
     cax = fh.add_axes([ax1.get_position().x1+0.01,ax1.get_position().y0,0.02,ax1.get_position().height])
     plt.colorbar(dep_show, cax=cax) 
 
-def display_images_cv(images:list, ratio=None, window_name="OpenCV Display"):
-    """Display a sequence of images
+
+#
+#-------------------------------------------------------------------------
+#======================== OpenCV Display Interface =======================
+#-------------------------------------------------------------------------
+#
+
+#===================== OpenCV Single Image Interfaces ====================
+#-------------------------------------------------------------------------
+
+#=============================== depth_cv ==============================
+#
+def depth_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
+
+    '''!
+    @brief  Display depth image using OpenCV window.
+
+    The depth frame will be scaled to have the range 0-255.
+    There will be no color bar for the depth
+
+    Args:
+        depth (np.ndarray, (H, W)): The depth map
+        depth_clip (float in [0, 1]): The depth value clipping percentage. The top and bottom extreme depth value to remove. Default to 0.0 (no clipping)
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    # Apply depth clipping if requested.
+    # Convert depth to cv2 image format: scale to 255, convert to 3-channel
+    if depth_clip > 0:
+        assert depth_clip < 0.5
+        improc = improcessor.basic(improcessor.basic.clipTails,(depth_clip,))
+        depth_show = improc.apply(depth)
+        depth_color = cv2.applyColorMap(cv2.convertScaleAbs(depth_show, alpha=255./depth_show.max(), beta=0), cv2.COLORMAP_JET)
+    else:
+        depth_color = cv2.applyColorMap(cv2.convertScaleAbs(depth, alpha=255./depth.max(), beta=0), cv2.COLORMAP_JET)
+
+    # Rescale if requested.
+    if ratio is not None: 
+        H, W = depth.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        depth_color = cv2.resize(depth_color, (W_vis, H_vis))
+
+    # Display colorized depth image.
+    cv2.imshow(window_name, depth_color[:,:,::-1])
+
+#================================ rgb_cv ===============================
+#
+def rgb_cv(rgb, ratio=None, window_name="Image"):
+
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = rgb.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        rgb_vis = cv2.resize(rgb, (W_vis, H_vis))
+        cv2.imshow(window_name, rgb_vis[:,:,::-1])
+    else:
+        cv2.imshow(window_name, rgb[:,:,::-1])
+
+def gray_cv(gim, ratio=None, window_name="Image"):
+
+    '''!
+    @brief  Display grayscale image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = gim.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        gim_vis = cv2.resize(gim, (W_vis, H_vis))
+        cv2.imshow(window_name, gim_vis)
+    else:
+        cv2.imshow(window_name, gim)
+
+#============================== binary_cv ==============================
+#
+def binary_cv(bIm, ratio=None, window_name="Binary"):
+    '''!
+    @brief  Display binary image using OpenCV display routines.
+
+    The binary frame will be resized as indicated prior to visualization.
+
+    @param[in]  bIm     Binary image as a numpy H x W ndarray.
+    @param[in]  ratio   Resize ratio of image to display (float, optional).
+                        Default is None = no resizing.
+    @param[in]  window_name     Window display name (Default = "Binary").    
+    '''
+
+    cIm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
+
+    if ratio is not None:                                   # Resize if requested.
+        H, W = bIm.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        cIm = cv2.resize(cIm, (W_vis, H_vis))
+        cv2.imshow(window_name, cIm)
+    else:
+        cv2.imshow(window_name, cIm)
+
+
+#================== OpenCV Side-by-Side Image Interfaces =================
+#-------------------------------------------------------------------------
+
+#============================== images_cv ==============================
+#
+# @note Used to be called display_images_cv but display is redundant.
+#
+def images_cv(images:list, ratio=None, window_name="OpenCV Display"):
+    """
+    @brief  Display a set of images horizontally concatenated (side-by-side).
 
     Args:
         images (list): A list of the OpenCV images (bgr) of the same size
         window_name (str, Optional): The window name for display. Defaults to \"OpenCV display\"
     """
-    # resize the imgs
+    # Resized image dimensions. 
     H, W = images[0].shape[:2]
     if ratio is not None:
         H_vis = int(ratio * H)
@@ -66,12 +188,48 @@ def display_images_cv(images:list, ratio=None, window_name="OpenCV Display"):
     else:
         H_vis = H
         W_vis = W
+
+    # Resize if requested. Stack images horizontally. Display w/imshow.
     images_vis = [cv2.resize(img, (W_vis, H_vis)) for img in images]
-    #  Stack both images horizontally
     image_display = np.hstack(tuple(images_vis))
-    #  Show images
     cv2.imshow(window_name, image_display)
 
+
+#============================= rgb_depth_cv ============================
+#
+def rgb_depth_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
+
+    """
+    @brief  Display rgb and depth images side-by-side using OpenCV.
+
+    Depth frame will be scaled to range [0,255].
+    The rgb and the depth images will be resized to visualization size, then concatenated horizontally.
+    The concatenated image will be displayed in a window.
+    There will be no color bar for the depth
+
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        depth (np.ndarray, (H, W)): The depth map
+        depth_clip (float in [0, 1]): The depth value clipping percentage. The top and bottom extreme depth value to remove. Default to 0.0 (no clipping)
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    """
+    # depth clip
+    if depth_clip > 0:
+        assert depth_clip < 0.5
+        improc = improcessor.basic(improcessor.basic.clipTails,(depth_clip,))
+        depth_show = improc.apply(depth)
+    else:
+        depth_show = depth
+
+    # convert the depth to cv2 image format: scale to 255, convert to 3-channel
+    depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_show, alpha=255./depth_show.max(), beta=0), cv2.COLORMAP_JET)
+
+    # diplay
+    images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
+
+
+# @todo Should delete this function.
 def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
 
     """Display the rgb and depth image using the OpenCV
@@ -101,8 +259,9 @@ def display_rgb_dep_cv(rgb, depth, depth_clip=0.08, ratio=None, window_name="Ope
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_show, alpha=255./depth_show.max(), beta=0), cv2.COLORMAP_JET)
 
     # diplay
-    display_images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
+    images_cv((rgb[:,:,::-1], depth_colormap), ratio=ratio, window_name=window_name)
 
+# @todo Should delete this function.
 def display_dep_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
 
     '''!
@@ -137,27 +296,6 @@ def display_dep_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Displ
     # Display colorized depth image.
     cv2.imshow(window_name, depth_color[:,:,::-1])
 
-def rgb_cv(rgb, ratio=None, window_name="Image"):
-
-    '''!
-    @brief  Display rgb image using the OpenCV
-
-    The rgb frame will be resized to a visualization size prior to visualization.
-    Args:
-        rgb (np.ndarray, (H, W, 3)): The rgb image
-        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
-        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
-    '''
-    if ratio is not None:                                   # Resize if requested.
-        H, W = rgb.shape[:2]
-        H_vis = int(ratio * H)
-        W_vis = int(ratio * W)
-        rgb_vis = cv2.resize(rgb, (W_vis, H_vis))
-        cv2.imshow(window_name, rgb_vis[:,:,::-1])
-    else:
-        cv2.imshow(window_name, rgb[:,:,::-1])
-
-
 #============================ rgb_binary_cv ============================
 #
 def rgb_binary_cv(cIm, bIm, ratio=None, window_name="Color+Binary"):
@@ -175,33 +313,7 @@ def rgb_binary_cv(cIm, bIm, ratio=None, window_name="Color+Binary"):
 
     cBm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
 
-    display_images_cv((cIm[:,:,::-1], cBm), ratio=ratio, 
-                                            window_name=window_name)
-
-#============================== binary_cv ==============================
-#
-def binary_cv(bIm, ratio=None, window_name="Binary"):
-    '''!
-    @brief  Display binary image using OpenCV display routines.
-
-    The binary frame will be resized as indicated prior to visualization.
-
-    @param[in]  bIm     Binary image as a numpy H x W ndarray.
-    @param[in]  ratio   Resize ratio of image to display (float, optional).
-                        Default is None = no resizing.
-    @param[in]  window_name     Window display name (Default = "Binary").    
-    '''
-
-    cIm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
-
-    if ratio is not None:                                   # Resize if requested.
-        H, W = bIm.shape[:2]
-        H_vis = int(ratio * H)
-        W_vis = int(ratio * W)
-        cIm = cv2.resize(cIm, (W_vis, H_vis))
-        cv2.imshow(window_name, cIm)
-    else:
-        cv2.imshow(window_name, cIm)
+    images_cv((cIm[:,:,::-1], cBm), ratio=ratio, window_name=window_name)
 
 
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
