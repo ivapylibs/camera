@@ -48,6 +48,11 @@ class Base():
 
     Defines some shared functionality interfaces
     """
+
+
+    #============================= __init__ ============================
+    #
+    #
     def __init__(self, configs, K = None) -> None:
         '''!
         @brief  Base class instantiator for camera runners.
@@ -59,20 +64,43 @@ class Base():
         else:
             self.K = K
 
-
+    #========================== set_intrinsics =========================
+    #
+    #
     def set_intrinsic(self, K):
         self.K = K
 
+    #============================== start ==============================
+    #
+    #
+    def start(self):
+        pass
+
+    #=============================== stop ==============================
+    #
+    #
+    def stop(self):
+        pass
+
+    #============================ get_frames ===========================
+    #
+    #
     def get_frames(self):
         """Get the next frames
         """
         raise NotImplementedError
     
+    #=========================== get_configs ===========================
+    #
+    #
     def get_configs(self):
         """Get all the configurations
         """
         return self.configs
     
+    #=========================== set_configs ===========================
+    #
+    #
     def set_configs(self, configs):
         """set all the configurations
 
@@ -81,6 +109,9 @@ class Base():
         """
         self.configs = configs
     
+    #=============================== get ===============================
+    #
+    #
     def get(self, key):
         """Get a particular configuration.
 
@@ -89,6 +120,9 @@ class Base():
         """
         raise NotImplementedError
 
+    #=============================== set ===============================
+    #
+    #
     def set(self, key, value):
         """Set a particular configuration.
 
