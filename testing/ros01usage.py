@@ -40,12 +40,10 @@ theCamera.start()
 while not rospy.is_shutdown():
     rgb = theCamera.get_frames()
 
-    #print(rgb(500,200))
-
-    time.sleep(0.25)
 
     #display.rgb_cv(rgb, ratio=0.5, window_name="Camera Topic." )
 
+    time.sleep(0.25)
     #opKey = cv2.waitKey(1)
     #if opKey == ord('q'):
     #    break
