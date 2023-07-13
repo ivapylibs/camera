@@ -14,17 +14,15 @@ reading.
 '''
 #================================ ros01basic ===============================
 #
-# @author         Yiye Chen.            yychen2019@gatech.edu
 # @author         Patricio A. Vela,     pvela@gatech.edu
+# @date           2023/07/13            [Created]
 #
-# @date           2021/10/07            [Created]
-# @date           2023/05/26            [Modified]
-#
-#=============================== test01_basic ==============================
+#================================ ros01basic ===============================
 
 
 import cv2
 import time
+import rospy
 
 import camera.utils.display as display
 import camera.rostopic as roscam
@@ -42,6 +40,8 @@ theCamera.start()
 while not rospy.is_shutdown():
     rgb = theCamera.get_frames()
 
+    #print(rgb(500,200))
+
     time.sleep(0.25)
 
     #display.rgb_cv(rgb, ratio=0.5, window_name="Camera Topic." )
@@ -54,4 +54,4 @@ while not rospy.is_shutdown():
 theCamera.stop()
 
 #
-#=============================== test01_basic ==============================
+#================================ ros01basic ===============================
