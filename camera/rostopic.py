@@ -14,12 +14,6 @@ import rospy
 
 import camera.Base as Camera
 
-@dataclass
-class ImageRGBD:
-  color: any = None
-  depth: any = None
-
-
 class CfgROSCam(Camera.CfgCamera):
     '''!
     @brief  Configuration setting specifier for ROS connected camera.
@@ -92,7 +86,7 @@ class Color(Camera.Color):
       theTopic = self.config.topicPath + "/" + self.config.topicName
       self.camsub = rospy.Subscriber(theTopic,                      \
                                      numpy_msg(self.config.topic),  \
-                                     self.streamCB)
+                                     &Color.streamCB, &self) 
 
     #=============================== stop ==============================
     #

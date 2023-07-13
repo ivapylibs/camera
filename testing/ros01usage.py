@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#================================ ros01usage ===============================
+#================================ ros01basic ===============================
 '''!
 @brief  Basic usage of image stream capture from ROS topic. 
 
@@ -12,19 +12,21 @@ reading to ROS robot usage.
 The more critical one being from direct camera reading to ROS bag
 reading.
 '''
-#================================ ros01usage ===============================
+#================================ ros01basic ===============================
 #
+# @author         Yiye Chen.            yychen2019@gatech.edu
 # @author         Patricio A. Vela,     pvela@gatech.edu
 #
-# @date           2023/07/13            [Created]
+# @date           2021/10/07            [Created]
+# @date           2023/05/26            [Modified]
 #
-#================================ ros01usage ===============================
+#=============================== test01_basic ==============================
 
 
-#import cv2
+import cv2
 import time
 
-#import camera.utils.display as display
+import camera.utils.display as display
 import camera.rostopic as roscam
 
 
@@ -52,4 +54,4 @@ while not rospy.is_shutdown():
 theCamera.stop()
 
 #
-#================================ ros01usage ===============================
+#=============================== test01_basic ==============================
