@@ -315,7 +315,9 @@ def rgb_binary_cv(cIm, bIm, ratio=None, window_name="Color+Binary"):
 
     images_cv((cIm[:,:,::-1], cBm), ratio=ratio, window_name=window_name)
 
-
+#=========================== wait_for_confirm ==========================
+#
+#
 def wait_for_confirm(rgb_dep_getter:Callable, color_type="rgb", window_name = "display",
         instruction="Press \'c\' key to select the frames. Press \'q\' to return None", 
         capture_click = False,
@@ -380,3 +382,10 @@ if __name__ == "__main__":
     cv2.waitKey(1)
     plt.show()
     
+#=============================== close_cv ==============================
+#
+# @brief    Close the displayed window.
+#
+def close_cv(window_name):
+  cv2.destroyWindow(window_name)
+

@@ -23,6 +23,7 @@ reading.
 import cv2
 import time
 import rospy
+import numpy as np
 
 import camera.utils.display as display
 import camera.rostopic as roscam
@@ -36,17 +37,18 @@ theCamera = roscam.Color(cfgCamera)
 
 theCamera.start()
 
+time.sleep(0.2)
 
 while not rospy.is_shutdown():
     rgb = theCamera.get_frames()
 
-
-    #display.rgb_cv(rgb, ratio=0.5, window_name="Camera Topic." )
+    print(np.shape(rgb))
+    display.rgb_cv(rgb, ratio=0.5, window_name="Camera Topic." )
 
     time.sleep(0.25)
-    #opKey = cv2.waitKey(1)
-    #if opKey == ord('q'):
-    #    break
+    opKey = cv2.waitKey(1)
+    if opKey == ord('q'):
+        break
 
 
 theCamera.stop()
