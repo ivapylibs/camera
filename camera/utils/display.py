@@ -101,7 +101,6 @@ def depth_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):
 #================================ rgb_cv ===============================
 #
 def rgb_cv(rgb, ratio=None, window_name="Image"):
-
     '''!
     @brief  Display rgb image using the OpenCV
 
@@ -164,6 +163,61 @@ def binary_cv(bIm, ratio=None, window_name="Binary"):
         cv2.imshow(window_name, cIm)
     else:
         cv2.imshow(window_name, cIm)
+
+#============================ trackpoint_cv ============================
+#
+def trackpoint_cv(rgb, p, ratio=None, window_name="Image"):
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = rgb.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        rgb_vis = cv2.resize(rgb, (W_vis, H_vis))
+        p = ratio * p
+    else:
+        rgb_vis = rgb
+
+    p_vis = np.fix(p)
+
+    cv2.drawMarker(rgb_vis, (int(p_vis[0,0]),int(p_vis[1,0])), (255, 0, 0), cv2.MARKER_CROSS, 10, 2)
+    cv2.imshow(window_name, rgb_vis[:,:,::-1])
+
+#============================ trackpoint_cv ============================
+#
+def trackpoint_binary_cv(bIm, p, ratio=None, window_name="Image"):
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    cIm = cv2.cvtColor(bIm.astype(np.uint8)*255, cv2.COLOR_GRAY2BGR)
+    trackpoint_cv(cIm, p, ratio, window_name)
+
+def trackpoint_gray_cv(gIm, p, ratio=None, window_name="Image"):
+
+    '''!
+    @brief  Display grayscale image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    cIm = cv2.cvtColor(gIm, cv2.COLOR_GRAY2BGR)
+    trackpoint_cv(cIm, p, ratio, window_name)
 
 
 #================== OpenCV Side-by-Side Image Interfaces =================
