@@ -25,9 +25,11 @@ from camera.d435.runner2 import CfgD435
 
 import camera.utils.display as display
 
+bagName = '/home/mary/Downloads/16fd1967d2_Garrison.bag'
+
 pipe   = rs.pipeline()
 config = rs.config()
-config.enable_device_from_file('/home/mary/Downloads/16fd1967d2_Garrison.bag')
+config.enable_device_from_file(bagName)
 config.enable_all_streams()
 
 profile = pipe.start(config)
