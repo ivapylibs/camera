@@ -190,6 +190,36 @@ def trackpoint_cv(rgb, p, ratio=None, window_name="Image"):
     cv2.drawMarker(rgb_vis, (int(p_vis[0,0]),int(p_vis[1,0])), (255, 0, 0), cv2.MARKER_CROSS, 10, 2)
     cv2.imshow(window_name, rgb_vis[:,:,::-1])
 
+#============================ trackpoints_cv ===========================
+#
+def trackpoints_cv(rgb, p, ratio=None, window_name="Image"):
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = rgb.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        rgb_vis = cv2.resize(rgb, (W_vis, H_vis))
+        p = ratio * p
+    else:
+        rgb_vis = rgb
+
+    p_vis = np.fix(p)
+
+    nTPs = np.shape(p_vis)[1]
+    for ii in range(nTPs):
+      cv2.drawMarker(rgb_vis, (int(p_vis[0,ii]),int(p_vis[1,ii])), (255, 0, 0), cv2.MARKER_CROSS, 10, 2)
+    
+    cv2.imshow(window_name, rgb_vis[:,:,::-1])
+
+
 #============================ trackpoint_cv ============================
 #
 def trackpoint_binary_cv(bIm, p, ratio=None, window_name="Image"):
