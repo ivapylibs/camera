@@ -10,11 +10,17 @@
 # ======================================= display =========================================
 
 from typing import Callable, List
+from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
 import improcessor.basic as improcessor
+
+@dataclass
+class plotfig:
+  num   : any
+  axes  : any
 
 def display_rgb_dep_plt(rgb, depth, suptitle=None, figsize=(10,5), fh=None):
     """Display the rgb and depth image in a same figure at two different axes
