@@ -125,6 +125,27 @@ def rgb_cv(rgb, ratio=None, window_name="Image"):
     else:
         cv2.imshow(window_name, rgb[:,:,::-1])
 
+#================================ bgr_cv ===============================
+#
+def bgr_cv(bgr, ratio=None, window_name="Image"):
+    '''!
+    @brief  Display rgb image using the OpenCV
+
+    The rgb frame will be resized to a visualization size prior to visualization.
+    Args:
+        rgb (np.ndarray, (H, W, 3)): The rgb image
+        ratio (float, Optional): Allow resizing the images before display.  Defaults to None, which means will perform no resizing
+        window_name (sting, Optional): The window name for display. Defaults to \"OpenCV display\"
+    '''
+    if ratio is not None:                                   # Resize if requested.
+        H, W = bgr.shape[:2]
+        H_vis = int(ratio * H)
+        W_vis = int(ratio * W)
+        bgr_vis = cv2.resize(bgr, (W_vis, H_vis))
+        cv2.imshow(window_name, bgr_vis)
+    else:
+        cv2.imshow(window_name, bgr)
+
 def gray_cv(gim, ratio=None, window_name="Image"):
 
     '''!

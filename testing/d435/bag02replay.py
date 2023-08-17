@@ -29,7 +29,7 @@ import camera.utils.display as display
 
 pipe   = rs.pipeline()
 config = rs.config()
-config.enable_device_from_file('/home/mary/Downloads/16fd1967d2_Garrison.bag')
+config.enable_device_from_file('bagsource.bag')
 config.enable_all_streams()
 
 profile = pipe.start(config)

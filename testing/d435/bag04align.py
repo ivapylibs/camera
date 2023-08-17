@@ -32,13 +32,13 @@ import camera.utils.display as display
 
 pipe   = rs.pipeline()
 config = rs.config()
-config.enable_device_from_file('/home/mary/Downloads/16fd1967d2_Garrison.bag')
+config.enable_device_from_file('bagsource.bag')
 config.enable_all_streams()
+align = rs.align(rs.stream.color)
 
 profile = pipe.start(config)
-# @note Will crash here is the bag file is compressed.
+# @note Will crash here if the bag file is compressed.
 
-align = rs.align(rs.stream.color)
 
 while True:
   frame = pipe.wait_for_frames()

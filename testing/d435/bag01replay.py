@@ -25,7 +25,7 @@ from camera.d435.runner2 import CfgD435
 
 import camera.utils.display as display
 
-bagName = '/home/mary/Downloads/16fd1967d2_Garrison.bag'
+bagName = 'bagsource.bag'
 
 pipe   = rs.pipeline()
 config = rs.config()

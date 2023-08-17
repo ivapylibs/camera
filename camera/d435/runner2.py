@@ -82,14 +82,33 @@ class CfgD435(CfgNode):
               config = dict(load = False, file = "", ros = ""),
               depth  = dict(use = True, res = [848, 480], fps = 30),
               color  = dict(use = True , res = [1920, 1080], fps = 30) ,
-              align  = False, exposure = None, gain = None ) )
+              align  = False, exposure = None, gain = None,
+              ros    = dict(enable = False, depth = dict(pub = False, topic = ''), \
+                                            color = dict(pub = False, topic = ''), \
+                            load = False, file = '') ) )
         return default_dict
 
     # @note Need to fix it so that defaults permit not using one of the streams.
     #       Ignoring for now in the interest of progress.  Will need to circle
     #       back eventually.
 
+    #=========================== builtForReplay ==========================
+    #
+    @staticmethod
+    def builtForReplay(rosFile = None):
 
+        replayCfg = CfgD435()
+        replayCfg.camera.ros.enable = True
+        replayCfg.camera.ros.depth.pub = replayCfg.camera.depth.use
+        replayCfg.camera.ros.depth.topic = '/device_0/sensor_0/Depth_0/image/data'
+        replayCfg.camera.ros.color.pub = replayCfg.camera.color.use
+        replayCfg.camera.ros.color.topic = '/device_0/sensor_1/Color_0/image/data'
+
+        if rosFile is not None:
+            replayCfg.camera.ros.load = True
+            replayCfg.camera.ros.file = rosFile
+
+        return replayCfg
     
 #=============================== D435_Runner ===============================
 #
@@ -348,5 +367,125 @@ class D435_Runner(base.Base):
 
 
 
+#====================================== Replay =====================================
+#
+
+class Replay(D435_Runner):
+    """!
+    @brief  Replay a recorded stream from a bag file.
+    """
+
+    #============================== __init__ =============================
+    #
+    def __init__(self, configs) -> None:
+        '''!
+        @brief  Constructor for Intel Realsense D435 camera bag replay instance.
+
+        @param[in]  configs     Settings to apply (indicates topics and alignment).
+        '''
+        super(D435_Runner,self).__init__(configs=configs)    # Skip D435 init. Use its superclass.
+
+        self.Kdepth = None
+        self.gCD    = None
+        self.depth_scale = 1
+
+        # Configure realsense depth and color streams. Load file if specified.
+        self.pipeline  = rs.pipeline()
+        self.rs_config = rs.config()
+
+
+        if (self.configs.camera.ros.load):
+            self.rs_config.enable_device_from_file(self.configs.camera.ros.file)
+        else:
+            raise Exception("Error, confguration indicates not to load file.")
+
+
+    #=============================== start ===============================
+    #
+    def start(self):
+        '''!
+        @brief  Start capturing the stream.
+
+        @note   Right now the construction does this, which is poor design.
+        @todo   Should implement start/stop functionality and capture boolean.
+        '''
+
+        self.rs_config.enable_all_streams()
+
+        if (self.configs.camera.align):
+          self.align = rs.align(rs.stream.color)
+        else:
+          self.align = None
+
+        self.pipeline.start(self.rs_config)
+
+
+        # Should snag from ros topic information about intrinsics.
+        # What is best place for that.
+        # @note Not grabbing instrinsic / calib data about camera from topics.
+        #       Pushing to later, when needed since not sure how to snag
+        #       in advance.  Maybe through custom ros bag loading then file closure.
+        #       Reopen for actual streaming. Talk to Justin about this.
+        #
+        #if self.K is None:
+        #    intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
+        #    intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+        #    self.K = intrinsic_Mat
+
+    #============================= get_frames ============================
+    #
+    # @todo Rename to "capture" so that it is agnostic to what is being
+    #       captured.  The setup should determine that and the code should
+    #       be consistent with the setup, or at least sanity check the
+    #       results (by checking for None when this code is upgraded).
+    #
+    def get_frames(self, before_scale=False):
+        """!
+        @brief  Get the next frame(s)
+
+        Args:  
+            before_scale (bool). Before the scaling. If True, will get the integer depth map before scaling.
+
+        Returns:
+            rgb [np.ndarray]: The rgb image
+            dep [np.ndarray]: The depth map in meter
+            succ_flag [bool]: The indicator for the status of fetching the next frames. \
+                If true, then both rgb and depth frames are successfully fetched.
+        """
+        # Wait for a coherent pair of frames: depth and color
+        frames = self.pipeline.wait_for_frames()
+
+        # Align depth to color if enabled prior to starting.
+        if (self.configs.camera.align):
+            frames = self.align.process(frames)
+
+        # split depth and color. <class 'pyrealsense2.video_frame'>
+        # Convert realsense images to numpy arrays. Depth image in meters
+        allGood = True
+        if (self.configs.camera.depth.use):
+            depth_frame = frames.get_depth_frame()
+            if not depth_frame:
+                allGood = False
+            else:
+                depth_raw = np.asanyarray(depth_frame.get_data())
+                if before_scale:
+                    depth_image = depth_raw
+                else:
+                    depth_image = depth_raw * self.depth_scale
+        else:
+            depth_image = None
+
+        if (self.configs.camera.color.use):
+            color_frame = frames.get_color_frame()
+            if not color_frame:
+                allGood = False
+            else:
+                color_image = np.asanyarray(color_frame.get_data()) # already in RGB
+        else:
+            color_image = None
+
+
+        return color_image, depth_image, allGood
+    
 #
 #=================================== camera/d435 ===================================
