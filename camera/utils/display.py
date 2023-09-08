@@ -68,6 +68,12 @@ def display_rgb_dep_plt(rgb, depth, suptitle=None, figsize=(10,5), fh=None):
 #-------------------------------------------------------------------------
 
 
+#=============================== wait_cv ===============================
+
+def wait_cv(dur=0):
+  opKey = cv2.waitKey(dur)
+  return opKey
+
 #=============================== depth_cv ==============================
 #
 def depth_cv(depth, depth_clip=0.08, ratio=None, window_name="OpenCV Display"):

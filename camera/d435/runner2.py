@@ -387,7 +387,9 @@ class Replay(D435_Runner):
 
         self.Kdepth = None
         self.gCD    = None
-        self.depth_scale = 1
+        self.depth_scale = 0.0010000000474974513
+        # @todo Snag from /device_0/sensor_0/option/Depth_Units/value
+        #       How to read without having to subscribe and be stuck?? Talk to Justin.
 
         # Configure realsense depth and color streams. Load file if specified.
         self.pipeline  = rs.pipeline()
