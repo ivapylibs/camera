@@ -17,6 +17,6 @@ setup(
         "improcessor @ git+https://github.com/ivapylibs/improcessor.git",
     ],
     extras_require={
-      "viz": ["mayavi", "wxpython"]
-    }
+        "viz": ["mayavi"],
+    },
 )
