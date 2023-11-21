@@ -500,6 +500,13 @@ if __name__ == "__main__":
     cv2.waitKey(1)
     plt.show()
     
+#=============================== wait_cv ===============================
+#
+# @brief    Wait for user input.
+#
+#def wait_cv():
+#  cv2.waitKey()
+
 #=============================== close_cv ==============================
 #
 # @brief    Close the displayed window.
