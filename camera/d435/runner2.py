@@ -366,6 +366,14 @@ class D435_Runner(base.Base):
                    window_name="Camera signals. Press \'q\' to exit")
 
 
+    #============================== buildFromFile ==============================
+    #
+    @staticmethod
+    def buildFromFile(configFile):
+
+        configs = CfgD435()
+        configs.merge_from_file(configFile)
+        return D435_Runner(configs)
 
 #====================================== Replay =====================================
 #
