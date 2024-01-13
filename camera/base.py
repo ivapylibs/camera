@@ -1,17 +1,22 @@
+#===================================== base ====================================
+"""!
+@package    base
+@brief      Define the base classes for camera interface.
+"""
+#===================================== base ====================================
+"""!
+@author Patricio A. Vela,       pvela@gatech.edu
+@date           [created] 10/07/2021
+
 """
 
-    @brief          Define the base class for the camera runners
-
-    @author         Yiye Chen.          yychen2019@gatech.edu
-    @date           [created] 10/07/2021
-
-"""
-
+#
+#===================================== base ====================================
 
 from dataclasses import dataclass
 import numpy as np
 
-from yacs.config import CfgNode
+from ivapy.Configuration import AlgConfig
 
 @dataclass
 class ImageRGBD:
@@ -19,7 +24,7 @@ class ImageRGBD:
   depth: any = None
 
 
-class CfgCamera(CfgNode):
+class CfgCamera(AlgConfig):
     '''!
 
     @brief  Configuration setting specifier for generic camera.
@@ -135,16 +140,16 @@ class Base():
 
 
 class Color(Base):
-    '''!
-    @brief  Expands on base class to specialize to color images.
+  '''!
+  @brief  Expands on base class to specialize to color images.
 
-    What might this do that is unique?
-    '''
-    #============================ Color __init___ ============================
-    #
-    def __init__(self, configs, K = None) -> None:
-        super().__init__(configs, K)
-
+  What might this do that is unique?
+  '''
+  #============================ Color __init___ ============================
+  #
+  def __init__(self, configs, K = None) -> None:
+    super().__init__(configs)
+    self.K = K
 
 
 class Grayscale(Base):
@@ -159,4 +164,89 @@ class Grayscale(Base):
         super().__init__(configs, K)
 
 
+#====================================== Replay =====================================
+#
 
+class ReplayColor(Color):
+  """!
+  @brief  Replay a recorded color stream from a bag file.
+  """
+
+  #============================== __init__ =============================
+  #
+  def __init__(self, configs) -> None:
+      '''!
+      @brief  Constructor for color camera bag replay instance.
+
+      @param[in]  configs     Settings to apply (indicates topics and alignment).
+      '''
+      super(Color,self).__init__(configs=configs) 
+
+      if (self.configs.camera.ros.load):
+        #self.rs_config.enable_device_from_file(self.configs.camera.ros.file)
+        # @todo Add ROS bag loading.
+        pass
+      else:
+        raise Exception("Error, confguration indicates not to load file.")
+
+
+  #=============================== start ===============================
+  #
+  def start(self):
+    '''!
+    @brief  Start capturing the stream.
+
+    @note   Right now the construction does this, which is poor design.
+    @todo   Should implement start/stop functionality and capture boolean.
+    '''
+
+    #self.rs_config.enable_all_streams()
+    # @todo   start the ros bag.
+
+    # Should snag from ros topic information about intrinsics.
+    # What is best place for that.
+    # @note Not grabbing instrinsic / calib data about camera from topics.
+    #       Pushing to later, when needed since not sure how to snag
+    #       in advance.  Maybe through custom ros bag loading then file closure.
+    #       Reopen for actual streaming. Talk to Justin about this.
+    #
+    #if self.K is None:
+    #    intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
+    #    intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+    #    self.K = intrinsic_Mat
+
+  #============================== capture ==============================
+  #
+  #
+  def capture(self):
+    """!
+    @brief  Get the next frame(s)
+
+    @param[out] color_image     The color image.
+    @param[out] succ_flag       Frame fetch success flag.
+    """
+    # Wait for next frame.
+    #frames = self.pipeline.wait_for_frames()
+    # @todo Put ROS bag equivalent.
+
+    # @todo Code is totally bad.  Should not run.
+    color_image = None
+    succ_flag = False
+    return color_image, succ_flag
+    # WIPE ABOVE WHEN CODE PROPERLY.
+
+    if (self.configs.camera.color.use):
+      #color_frame = frames.get_color_frame()
+      if not color_frame:
+        allGood = False
+      #else:
+      #   color_image = np.asanyarray(color_frame.get_data()) # already in RGB
+    else:
+      color_image = None
+      succ_flag = False
+
+
+    return color_image, succ_flag
+ 
+#
+#===================================== base ====================================
