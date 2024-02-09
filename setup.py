@@ -1,3 +1,8 @@
+"""!
+  @defgroup Camera  Camera interfaces
+"""
+
+
 from setuptools import setup, find_packages
 
 setup(
