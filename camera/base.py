@@ -10,6 +10,7 @@
 
 from dataclasses import dataclass
 import numpy as np
+import cv2
 
 from yacs.config import CfgNode
 
@@ -17,6 +18,7 @@ from yacs.config import CfgNode
 class ImageRGBD:
   color: any = None
   depth: any = None
+
 
 
 class CfgCamera(CfgNode):
