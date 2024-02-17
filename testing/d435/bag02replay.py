@@ -33,7 +33,7 @@ config.enable_device_from_file('bagsource.bag')
 config.enable_all_streams()
 
 profile = pipe.start(config)
-# @note Will crash here is the bag file is compressed.
+# @note Will crash here if the bag file is compressed.
 
 while True:
   frame = pipe.wait_for_frames()

@@ -27,7 +27,7 @@ import camera.utils.rs_utils as rs_utils
 from camera.base import ImageRGBD
 
 
-import camera.utils.display as display
+import ivapy.display_cv as display
 
 
 #================================== CfgD435 ==================================
@@ -310,7 +310,78 @@ class D435_Runner(base.Base):
         #    self.K = intrinsic_Mat
 
         return color_image, depth_image, allGood
-    
+
+    #============================== capture ==============================
+    #
+    #
+    def capture(self, before_scale=False):
+        """!
+        @brief  Get the next frame(s) with awareness of expected return.
+
+        Slightly more flexible version of get_frames agnostic to what is being
+        captured.  The setup determines configured returns and returns compatible
+        output.
+
+        Returns arguments provided in prioritized order based on camera configuration:
+        color, depth, flag.
+
+        @param[in]  before_scale [bool] If True, get integer depth map before scaling.
+
+
+        @param[out] rgb     [np.ndarray] RGB image if set to read.
+        @param[out] dep     [np.ndarray] Depth map in meters if set to read.
+        @param[out] flag    [bool] Indicator status of fetch/capture operation. \
+                                If true, then expected frame(s) fetched.
+        """
+        # Wait for a coherent pair of frames: depth and color
+        frames = self.pipeline.wait_for_frames()
+
+        # Align depth to color if enabled prior to starting.
+        if (self.configs.camera.align):
+            frames = self.align.process(frames)
+
+        # split depth and color. <class 'pyrealsense2.video_frame'>
+        # Convert realsense images to numpy arrays. Depth image in meters
+        allGood = True
+        if (self.configs.camera.depth.use):
+            depth_frame = frames.get_depth_frame()
+            if not depth_frame:
+                allGood = False
+            else:
+                depth_raw = np.asanyarray(depth_frame.get_data())
+                if before_scale:
+                    depth_image = depth_raw
+                else:
+                    depth_image = depth_raw * self.depth_scale
+        else:
+            depth_image = None
+
+        if (self.configs.camera.color.use):
+            color_frame = frames.get_color_frame()
+            if not color_frame:
+                allGood = False
+            else:
+                color_image = np.asanyarray(color_frame.get_data())[:,:,::-1] # BGR to RGB
+        else:
+            color_image = None
+
+        # Update intrinsic matrix stored in calibrator, in case of camera profile change.
+        #if self.K is None:
+        #    intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
+        #    intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+        #    self.K = intrinsic_Mat
+
+        if (self.configs.camera.color.use):
+            if (self.configs.camera.depth.use): 
+                return color_image, depth_image, allGood
+            else:
+                return color_image, allGood
+        elif (self.configs.camera.depth.use):
+            return depth_image, allGood
+        else:
+            return None, None, False
+
+
     #============================ captureRGBD ============================
     #
     #
@@ -319,7 +390,10 @@ class D435_Runner(base.Base):
         @brief  Snag the next set of RGB and D frames. 
 
         Captures the color and depth pair as an RGBD image instance. The depth
-        map should be returned in standard units (meters).
+        map should be returned in standard units (meters). Unlike the standard
+        capture routine, this one explicitly demands that the outcome be
+        packed into an RGBD frame structure, irrespective of output configuration.
+        That means a field can be None if it is not to be returned.
 
         @param[in]  before_scale    [bool] True = integer depth map before scaling.
 
@@ -362,7 +436,7 @@ class D435_Runner(base.Base):
     #
     def display(self, rgb, depth):
 
-        display.display_rgb_dep_cv(rgb, dep, ratio=0.5, \
+        display.rgb_dep(rgb, dep, ratio=0.5, \
                    window_name="Camera signals. Press \'q\' to exit")
 
 
@@ -496,6 +570,194 @@ class Replay(D435_Runner):
 
 
         return color_image, depth_image, allGood
+
+    #============================== capture ==============================
+    #
+    #
+    def capture(self, before_scale=False):
+        """!
+        @brief  Get the next frame(s) with awareness of expected return.
+
+        Slightly more flexible version of get_frames agnostic to what is being
+        captured.  The setup determines configured returns and returns compatible
+        output.
+
+        Returns arguments provided in prioritized order based on camera configuration:
+        color, depth, flag.
+
+        @param[in]  before_scale [bool] If True, get integer depth map before scaling.
+
+
+        @param[out] rgb     [np.ndarray] RGB image if set to read.
+        @param[out] dep     [np.ndarray] Depth map in meters if set to read.
+        @param[out] flag    [bool] Indicator status of fetch/capture operation. \
+                                If true, then expected frame(s) fetched.
+        """
+        # Wait for a coherent pair of frames: depth and color
+        frames = self.pipeline.wait_for_frames()
+
+        # Align depth to color if enabled prior to starting.
+        if (self.configs.camera.align):
+            frames = self.align.process(frames)
+
+        # split depth and color. <class 'pyrealsense2.video_frame'>
+        # Convert realsense images to numpy arrays. Depth image in meters
+        allGood = True
+        if (self.configs.camera.depth.use):
+            depth_frame = frames.get_depth_frame()
+            if not depth_frame:
+                allGood = False
+            else:
+                depth_raw = np.asanyarray(depth_frame.get_data())
+                if before_scale:
+                    depth_image = depth_raw
+                else:
+                    depth_image = depth_raw * self.depth_scale
+        else:
+            depth_image = None
+
+        if (self.configs.camera.color.use):
+            color_frame = frames.get_color_frame()
+            if not color_frame:
+                allGood = False
+            else:
+                color_image = np.asanyarray(color_frame.get_data()) # Already RGB
+        else:
+            color_image = None
+
+        # Update intrinsic matrix stored in calibrator, in case of camera profile change.
+        #if self.K is None:
+        #    intrinsic =  color_frame.profile.as_video_stream_profile().intrinsics
+        #    intrinsic_Mat = rs_utils.rs_intrin_to_M(intrinsic)
+        #    self.K = intrinsic_Mat
+
+        if (self.configs.camera.color.use):
+            if (self.configs.camera.depth.use): 
+                return color_image, depth_image, allGood
+            else:
+                return color_image, allGood
+        elif (self.configs.camera.depth.use):
+            return depth_image, allGood
+        else:
+            return None, None, False
+
+
+    #============================ replay_loop ============================
+    #
+    def replay_loop(self):
+        """!
+        @brief  Replay the data from the bag file attached to this instance.
+
+        Basically will display the color and depth information.  See process_loop 
+        for performing actual processing on the data.
+        """
+
+        self.start()
+
+        while True:
+            theFrame, gotFrame = self.captureRGBD()
+
+            if gotFrame:
+              
+                if self.configs.camera.align:
+                    display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                      ratio=0.5, window_name="RGBD")
+                else:
+                  display.rgb(color_image,ratio=0.5,window_name="color")
+                  display.depth(depth_image,ratio=0.5,window_name="depth")
+
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
+
+        self.stop()
+
+        if self.configs.camera.align:
+            display.close("RGBD")
+        else:
+            display.close("color")
+            display.close("depth")
+
+    #============================ process_loop ===========================
+    #
+    def process_loop(self, theProcessor, figOut = False):
+        """!
+        @brief  Replay and process data from the bag file attached to this instance.
+
+        Will loop through the bag file and send obtained data to the passed function.
+        The raw data can be visualized if set, otherwise the processing function is
+        responsible for handling output of raw, intermediate, or final data.
+
+        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
+        @param[in]  figOut          [False] Flag for including window output of raw data.
+        """
+
+        self.start()
+
+        while True:
+            theFrame, gotFrame = self.captureRGBD()
+
+            theProcessor(theFrame)
+
+            if figOut and gotFrame:
+              
+                if self.configs.camera.align:
+                    display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                      ratio=0.5, window_name="RGBD")
+                else:
+                  display.rgb(color_image,ratio=0.5,window_name="color")
+                  display.depth(depth_image,ratio=0.5,window_name="depth")
+
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
+
+        self.stop()
+
+        if figOut:
+            if self.configs.camera.align:
+                display.close("RGBD")
+            else:
+                display.close("color")
+                display.close("depth")
+
+    #=========================== process_frame ===========================
+    #
+    def process_frame(self, theProcessor, figOut = False):
+        """!
+        @brief  Replay and process data from the bag file attached to this instance.
+
+        Will query bag file for single measurement and send obtained data to the passed
+        function.  The raw data can be visualized if set, otherwise the processing function
+        is responsible for handling output of raw, intermediate, or final data.
+
+        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
+        @param[in]  figOut          [False] Flag for including window output of raw data.
+        """
+
+        theFrame, gotFrame = self.captureRGBD()
+
+        if (gotFrame):
+          theProcessor(theFrame)
+
+          if figOut:
+              
+            if self.configs.camera.align:
+              display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                ratio=0.5, window_name="RGBD")
+            else:
+              display.rgb(color_image,ratio=0.5,window_name="color")
+              display.depth(depth_image,ratio=0.5,window_name="depth")
+  
+          opKey = display.wait(0)
+
+          if figOut:
+              if self.configs.camera.align:
+                  display.close("RGBD")
+              else:
+                  display.close("color")
+                  display.close("depth")
+  
     
 #
 #=================================== camera/d435 ===================================
