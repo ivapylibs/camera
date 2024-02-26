@@ -1,17 +1,19 @@
 #!/usr/bin/python
 #================================ ros01basic ===============================
-'''!
-@brief  Basic usage of image stream capture from ROS topic. 
+## @file
+# @brief  Basic usage of image stream capture from ROS topic. 
+# 
+# Demonstrate basic usage of camera class to obtain and display images
+# from a ROS topic.  This is not necessarily the best approach, but it
+# retains compatibility with other camera class instances, thereby
+# minimizing code changes when going from direct camera reading to ROS bag
+# reading to ROS robot usage.
+# 
+# The more critical one being from direct camera reading to ROS bag
+# reading.
+# 
+# @quitf
 
-Demonstrate basic usage of camera class to obtain and display images
-from a ROS topic.  This is not necessarily the best approach, but it
-retains compatibility with other camera class instances, thereby
-minimizing code changes when going from direct camera reading to ROS bag
-reading to ROS robot usage.
-
-The more critical one being from direct camera reading to ROS bag
-reading.
-'''
 #================================ ros01basic ===============================
 #
 # @author         Patricio A. Vela,     pvela@gatech.edu
@@ -25,7 +27,8 @@ import time
 import rospy
 import numpy as np
 
-import camera.utils.display as display
+# import camera.utils.display as display # BAD
+import ivapy.display_cv as display
 import camera.rostopic as roscam
 
 
@@ -43,7 +46,7 @@ while not rospy.is_shutdown():
     rgb = theCamera.get_frames()
 
     print(np.shape(rgb))
-    display.rgb_cv(rgb, ratio=0.5, window_name="Camera Topic." )
+    display.rgb(rgb, ratio=0.5, window_name="Camera Topic." )
 
     time.sleep(0.25)
     opKey = cv2.waitKey(1)
