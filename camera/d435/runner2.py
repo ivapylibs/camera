@@ -80,7 +80,7 @@ class CfgD435(CfgNode):
         '''
         default_dict = dict( camera = dict ( 
               config = dict(load = False, file = "", ros = ""),
-              depth  = dict(use = True, res = [848, 480], fps = 30),
+              depth  = dict(use = True, res = [848, 480], fps = 30, bad = None),
               color  = dict(use = True , res = [1920, 1080], fps = 30) ,
               align  = False, exposure = None, gain = None,
               ros    = dict(enable = False, depth = dict(pub = False, topic = ''), \
@@ -167,6 +167,7 @@ class D435_Runner(base.Base):
             adv_mode.load_json(configStr)
 
         # Configure streaming sources.
+        # First depth.
         if (self.configs.camera.depth.use):
           self.rs_config.enable_stream(rs.stream.depth,  \
                   self.configs.camera.depth.res[0], self.configs.camera.depth.res[1], \
@@ -177,6 +178,11 @@ class D435_Runner(base.Base):
           self.depth_scale  = depth_sensor.get_depth_scale()
           self.depth_sensor = depth_sensor
 
+          if (self.configs.camera.depth.bad is not None) \
+             and (self.configs.camera.depth.bad < 0):
+           self.configs.camera.depth.bad = None
+
+        # Then color.
         if (self.configs.camera.color.use):
           self.rs_config.enable_stream(rs.stream.color, \
                   self.configs.camera.color.res[0], self.configs.camera.color.res[1], \
@@ -403,6 +409,13 @@ class D435_Runner(base.Base):
 
         theImage = ImageRGBD()
         theImage.color, theImage.depth, flSuccess = self.get_frames(before_scale)
+
+        print( (np.min(theImage.depth), np.max(theImage.depth)) )
+        if (self.configs.camera.depth.bad is not None):
+          print("Applying.")
+          theImage.depth = np.where(theImage.depth <= 0, \
+                                    self.configs.camera.depth.bad, \
+                                    theImage.depth)
 
         return (theImage, flSuccess)
 
