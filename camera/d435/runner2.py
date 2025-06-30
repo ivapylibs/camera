@@ -410,9 +410,7 @@ class D435_Runner(base.Base):
         theImage = ImageRGBD()
         theImage.color, theImage.depth, flSuccess = self.get_frames(before_scale)
 
-        print( (np.min(theImage.depth), np.max(theImage.depth)) )
         if (self.configs.camera.depth.bad is not None):
-          print("Applying.")
           theImage.depth = np.where(theImage.depth <= 0, \
                                     self.configs.camera.depth.bad, \
                                     theImage.depth)
