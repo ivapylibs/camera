@@ -157,7 +157,7 @@ class D435_Runner(base.Base):
                
                 rpkg       = rospkg.RosPack()
                 pkgPath    = rpkg.get_path(self.configs.camera.config.ros)
-                configFile = os.path.join(pkgPath,self.configs.camera.config.file)
+                configFile = open(os.path.join(pkgPath,self.configs.camera.config.file))
 
             configStr = json.load(configFile)
             configStr = str(configStr).replace("'", '\"')
