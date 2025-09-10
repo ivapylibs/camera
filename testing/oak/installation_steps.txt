@@ -1,0 +1,6 @@
+# installation requirements
+
+pip install -v "depthai==2.30.0.0"
+
+-> using version 2.30.0.0 because newest version 3.00.0.0 does not yet have much documentation for its modules. 
+    It is unfortunately very different from version 2.30.0.0 and an upgrade would result in code failures
