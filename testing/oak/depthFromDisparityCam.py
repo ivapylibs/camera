@@ -63,9 +63,16 @@ HFOV = 80 # degrees
 imageWidthInPixels = 640 # 640 due to THE_400_P selection
 focalLengthInPixels = imageWidthInPixels * 0.5 / math.tan(HFOV * 0.5 * math.pi/180)
 
+print(focalLengthInPixels)
+with dai.Device(pipeline) as device:
+    calibData = device.readCalibration()
+    intrinsics = calibData.getCameraIntrinsics(dai.CameraBoardSocket.CAM_C)
+    print('LEFT mono camera focal length in pixels:', intrinsics[0][0])
+    print(intrinsics)
+
 # apply depth frame to frame values that are non-zero. Zero means that we don't know the value
 # if value is 0, we say it is at max distance. Define Max distance = 500 cm
-maxDistance = 500 # cm = 5 m
+maxDistance = 100 # cm = 5 m
 
 with dai.Device(pipeline) as device:
 
