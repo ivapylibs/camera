@@ -13,6 +13,7 @@ import depthai as dai
 import cv2
 import numpy as np
 import math
+import ivapy.display_cv as display
 
 
 class ConfigOak():
@@ -40,6 +41,7 @@ class ConfigOak():
             self.config["depthCam"]["leftRightCheck"] = True
             self.config["depthCam"]["subpixel"] = True
             self.config["depthCam"]["defaultProfilePreset"] = dai.node.StereoDepth.PresetMode.DEFAULT
+            self.config["depthCam"]["setDepthAlign"] = dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign.RECTIFIED_LEFT
             
             # config spatialLocationCalculator
             self.config["spatialLocationCalculator"]["roiTopLeft"] = dai.Point2f(0.4, 0.4)
@@ -190,6 +192,8 @@ class Color(base.Color):
 
 class Depth(base.Base):
     '''OAK class to capture depth frames
+
+    The depth images are aligned to the left camera by default class initialization
     '''
     def __init__(self, configs=ConfigOak()):
         super().__init__(configs=configs)
@@ -232,6 +236,7 @@ class Depth(base.Base):
         config.roi = dai.Rect(self.get_configs()["spatialLocationCalculator"]["roiTopLeft"], self.get_configs()["spatialLocationCalculator"]["roiBottomRight"])
         self.spatialLocationCalculator.inputConfig.setWaitForMessage(False)
         self.spatialLocationCalculator.initialConfig.addROI(config)
+        self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
 
         ### TODO:: NOTE:: add this in configs
         self.depthCam.setDepthAlign(dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign.CENTER)
@@ -338,6 +343,8 @@ class Depth(base.Base):
 
 class RGBD(Depth):
     '''OAK class to capture images and depth (there are no color images for this camera, only black and white)
+
+    The depth images are aligned to the left camera by default class initialization
     '''
     def __init__(self, configs=ConfigOak()):
         super().__init__(configs=configs)
@@ -410,87 +417,93 @@ class RGBD(Depth):
             return (monoLeftFrame, super().get_frames(normalization=normalization, scaleFactor=scaleFactor*2))
         
     def capture(self):
-        '''Alias for get_frames
+        '''Gets RGBD frames in ImageRGBD() class format
         '''
-        return self.get_frames
+        frames = self.get_frames(normalization=True)
+        images = base.ImageRGBD()
+        images.color = frames[0]
+        images.depth = frames[1]
+        return images
     
     def process_loop(self, theProcessor, figOut=False):
         '''Will loop through indefinitely and send the obtained data to the passed function.
-            The raw data can be visualized if set, otherwise the processing function is 
-            responsible for handling output of raw, intermediat, or final data
+        The raw data can be visualized if set, otherwise the processing function is 
+        responsible for handling output of raw, intermediat, or final data
+            
+        Args:
+            theProcessor (any) : 
+                - RGBD stream data processor. Should handle input
+            figOut (optional) : 
+                - true -> automatically show raw data
+                - false -> do NOT automatically show raw data
         '''
-        # TODO: implement
-        pass
+        
+        self.start()
 
-    def process_frames_selected():
-        # TODO: implement
-        pass
+        while True:
+            images = self.capture()
 
-    def process_frame():
-        #TODO: implement
-        pass
+            theProcessor(images)
 
+            if figOut:
+                self.display(images.color, "color")
+                self.display(images.depth, "depth")
+            
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
 
-
-
-
-
-
-## ======= testing cam implementation ======= ##
-'''
-
-Testing functionality of RGBD camera and Color camera
-    - RGBD inherits Depth camera, so this intrinsically tests the depth camera as well
-
-Creating multiple camera objects in one file, stop and start allowing them to not conflic with each other
-Using depth frames to configure images
-Displaying both depth frames and image frames
-
-'''
-cam = RGBD()
-
-cam.start()
-
-while True:
-    monoFrame, depthFrame = cam.get_frames(normalization=True)
-    # show black as far away
-    blackFarAwayDepthFrame = 255 - depthFrame
-
-    cam.display(blackFarAwayDepthFrame, windowName='depth')
-    cam.display(monoFrame, windowName="image from cam")
+        self.stop()
+        if figOut:
+            display.close("color")
+            display.close("depth")
 
 
-    # only show objects that are close to the camera
-    closeDepthFrame = np.empty_like(depthFrame)
-    # (150/255)*1000 = 588 mm = 58.8 CM
-    mask = (depthFrame < 150)
-    closeDepthFrame[~mask] = 0
-    closeDepthFrame[mask] = monoFrame[mask]
+    def process_frames_selected(self, theProcessor, figOut=True):
+        '''Replay and process data from the bag file attached to this instance.
+        Will loop through the bag file and send obtained data to the passed function.
+        The raw data can be visulaized if set, otherwise the processing function is responsible
+        for handling output of raw, intermediate, or final data.
 
-    cam.display(closeDepthFrame, windowName="only show close up objects")
+        Args:
+            theProcessor (any) :
+                - RGBD stream data processor. Should handle input.
+            figOut (optional) :
+                - true -> automatically show raw data
+                - false -> do NOT automatically show raw data
+        '''
+        print("Replaying bag video. Hit 'q' to quit. Hit 's' to select.")
+        print("Selection will trigger additional processing. It might involve")
+        print("additional user input from keyboard or mouse.")
 
-    # cv2.imshow("only show close up objects", closeDepthFrame)
+        self.start()
 
-    if cv2.waitKey(1) == ord('q'):
-        break
+        while True:
+            images = self.capture()
 
-cam.stop()
+            if figOut:
+                self.display(images.color, "color")
+                self.display(images.depth, "depth")
 
-cv2.destroyAllWindows()
-
-cam2 = Color()
-cam2.start()
-
-while True:
-    leftMonoFrame, rightMonoFrame = cam2.get_frames(getBothMonoFrames=True)
-    # show black as far away
-    # cv2.imshow("left image from cam2", monoFrame)
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
+            elif opKey == ord('s'):
+                theProcessor(images)
 
 
-    cam2.display(leftMonoFrame, "left image from cam2")
-    cam2.display(rightMonoFrame, "right image from cam2")
+        self.stop()
 
-    if cv2.waitKey(1) == ord('q'):
-        break
 
-cam2.stop()
+    def process_frame(self, theProcessor, figOut=False):
+        images = self.capture()
+
+        theProcessor(images)
+
+        if figOut:
+            self.display(images.color, "color")
+            self.display(images.depth, "depth")
+
+        if figOut:
+            display.close("color")
+            display.close("depth")
