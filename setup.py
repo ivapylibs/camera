@@ -20,6 +20,7 @@ setup(
         "scikit-learn",
         "tqdm",
         "improcessor @ git+https://github.com/ivapylibs/improcessor.git",
+        "depthai==2.30.0.0",
     ],
     extras_require={
       "viz": ["mayavi", "wxpython"]
