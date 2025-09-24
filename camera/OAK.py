@@ -238,9 +238,6 @@ class Depth(base.Base):
         self.spatialLocationCalculator.initialConfig.addROI(config)
         self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
 
-        ### TODO:: NOTE:: add this in configs
-        self.depthCam.setDepthAlign(dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign.CENTER)
-
         # not ready until start is called
         self.ready = False
 
@@ -282,6 +279,7 @@ class Depth(base.Base):
         config.roi = dai.Rect(self.get_configs()["spatialLocationCalculator"]["roiTopLeft"], self.get_configs()["spatialLocationCalculator"]["roiBottomRight"])
         self.spatialLocationCalculator.inputConfig.setWaitForMessage(False)
         self.spatialLocationCalculator.initialConfig.addROI(config)
+        self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
 
     def set(self, cam, key, value):
         '''Set a particular configuration
