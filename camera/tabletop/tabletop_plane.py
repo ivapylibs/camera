@@ -11,7 +11,9 @@
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+import traceback
 
 class tabletopPlaneEstimator():
     """ The estimator of the tabletop plane in the camera frame.
@@ -54,17 +56,26 @@ class tabletopPlaneEstimator():
 
         error_map = self._produce_error_map(self.p_cam_map)
         return error_map
-    
-    def vis_plane(self, rgb):
+
+    def _draw_matplotlib(self, point_clouds, color_clouds):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+        ax.scatter(point_clouds[:, 0], point_clouds[:, 1], point_clouds[:, 2], c=color_clouds)
+        plt.show()
+
+    def _draw_mayavi(self, point_clouds, color_clouds):
+        import mayavi.mlab as mlab
+        mlab.figure(bgcolor=(0, 0, 0), size=(640, 480))
+        g = mlab.points3d(point_clouds[:, 0], point_clouds[:, 1], point_clouds[:, 2], mode="point")
+        g.mlab_source.dataset.point_data.scalars = color_clouds
+        mlab.show()
+
+    def vis_plane(self, rgb, force_matplotlib=False):
         """Visualize the calibrated point clouds in the camera frame
 
         Args:
             rgb (np.ndarray, (H, W, 3)). The camera frame
         """
-        Warning("This function uses the pptk for 3d point cloud visualization, which is only supported by the Python3.7. \
-            The matplotlib can also visualize the point cloud, but it is very slow.")
-        import mayavi.mlab as mlab
-
         point_clouds = None
         color_clouds = None
 
@@ -108,12 +119,17 @@ class tabletopPlaneEstimator():
         )
 
         # visualize
-        mlab.figure(bgcolor=(0, 0, 0), size=(640, 480))
-        g = mlab.points3d(point_clouds[:, 0], point_clouds[:, 1], point_clouds[:, 2], mode="point")
-        g.mlab_source.dataset.point_data.scalars = color_clouds
-        mlab.show()
-        
-    
+        if force_matplotlib:
+            self._draw_matplotlib(point_clouds, color_clouds)
+        else:
+            try:
+                self._draw_mayavi(point_clouds, color_clouds)
+            except Exception:
+                traceback.print_exc()
+                print(f"WARNING: Cannot import mayavi. Falling back to matplotlib (slow).")
+                self._draw_matplotlib(point_clouds, color_clouds)
+
+
     def get_plane_params(self):
         """Get the estimated plane parameters
 

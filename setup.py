@@ -23,6 +23,6 @@ setup(
         "depthai==2.30.0.0",
     ],
     extras_require={
-      "viz": ["mayavi", "wxpython"]
-    }
+        "viz": ["mayavi"],
+    },
 )
