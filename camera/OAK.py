@@ -204,8 +204,10 @@ class Color(base.Color):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
         Returns:
-            cameraMatrix (list (3,3)): intrinsice camera matrix
-            distortionCoeffs (list (,14)): distortion coefficients of the camera
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
 
@@ -379,8 +381,10 @@ class Depth(base.Base):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
         Returns:
-            cameraMatrix (list (3,3)): intrinsice camera matrix
-            distortionCoeffs (list (,14)): distortion coefficients of the camera
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
 
@@ -565,7 +569,9 @@ class RGBD(Depth):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
         Returns:
-            cameraMatrix (list (3,3)): intrinsice camera matrix
-            distortionCoeffs (list (,14)): distortion coefficients of the camera
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
