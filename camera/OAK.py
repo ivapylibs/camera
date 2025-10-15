@@ -257,6 +257,15 @@ class Depth(base.Base):
         self.spatialLocationCalculator.initialConfig.addROI(config)
         self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
 
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
+
         # not ready until start is called
         self.ready = False
 
