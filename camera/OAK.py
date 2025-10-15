@@ -102,6 +102,16 @@ class Color(base.Color):
         # not ready until start is called
         self.ready = False
 
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
+
+
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
         '''
@@ -190,6 +200,17 @@ class Color(base.Color):
             for subKey in subKeys:
                 print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
 
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
+
 class Depth(base.Base):
     '''OAK class to capture depth frames
 
@@ -238,8 +259,26 @@ class Depth(base.Base):
         self.spatialLocationCalculator.initialConfig.addROI(config)
         self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
 
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
+
         # not ready until start is called
         self.ready = False
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
@@ -338,6 +377,17 @@ class Depth(base.Base):
             for subKey in subKeys:
                 print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
 
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
+
 
 class RGBD(Depth):
     '''OAK class to capture images and depth (there are no color images for this camera, only black and white)
@@ -356,6 +406,15 @@ class RGBD(Depth):
         # link the mono cams to xlink
         self.monoLeftCam.out.link(self.monoLeftXLink.input)
         self.monoRightCam.out.link(self.monoRightXLink.input)
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
@@ -505,3 +564,14 @@ class RGBD(Depth):
         if figOut:
             display.close("color")
             display.close("depth")
+
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
