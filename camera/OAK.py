@@ -105,7 +105,7 @@ class Color(base.Color):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -262,7 +262,7 @@ class Depth(base.Base):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -274,7 +274,7 @@ class Depth(base.Base):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -410,7 +410,7 @@ class RGBD(Depth):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
