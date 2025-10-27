@@ -81,10 +81,14 @@ def calibrate(outFileDir, yamlFilePath="", cam=None, cameraMatrix=None, distorti
     except FileNotFoundError:
         pass
 
-    with open(outFileDir+"/extrinsics.yaml", 'x') as stream:
-        yaml.dump(extrinsics, stream)
-
-    print("NEED ARUCO TO BASE OF ROBOT STILL")
+    try:
+        with open(outFileDir+"/extrinsics.yaml", 'x') as stream:
+            yaml.dump(extrinsics, stream)
+    except FileNotFoundError:
+        os.mkdir(outFileDir)
+        with open(outFileDir+"/extrinsics.yaml", 'x') as stream:
+            yaml.dump(extrinsics, stream)
+    
 
 
 
@@ -109,4 +113,4 @@ def getExtrinsics(filePath):
     camMTX = extrinsics['camMTX']
     distortionCoeffs = extrinsics['distortionCoeffs']
 
-    return gCW, gWC, camMTX, distortionCoeffs
+    return np.array(gCW), np.array(gWC), np.array(camMTX), np.array(distortionCoeffs)
