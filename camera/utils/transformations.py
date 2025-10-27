@@ -53,4 +53,4 @@ def pixelToWorkspace(coordinates, depthMap, gWC = None, camMTX = None):
 
     # calculate the workspace frame position
     workspacePosition = np.array(gWC) @ np.block([[camFrame], [1]])
-    return workspacePosition[:3, 0]
+    return np.reshape(workspacePosition[:3, 0], (3,1))
