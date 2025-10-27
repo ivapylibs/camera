@@ -105,7 +105,7 @@ class Color(base.Color):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -262,7 +262,7 @@ class Depth(base.Base):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -274,7 +274,7 @@ class Depth(base.Base):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -410,7 +410,7 @@ class RGBD(Depth):
         # get and store the camera intrinsics
         with dai.Device(self.pipeline) as device:
             calibdata = device.readCalibration()
-            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
             distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
         self.K = leftMtx
         self.cameraMatrix = leftMtx
@@ -473,12 +473,12 @@ class RGBD(Depth):
         else:
             return (monoLeftFrame, super().get_frames(normalization=normalization, scaleFactor=scaleFactor*2))
         
-    def capture(self):
+    def capture(self, normalization=True):
         '''Gets RGBD frames in ImageRGBD() class format
         '''
-        frames = self.get_frames(normalization=True)
+        frames = self.get_frames(normalization=normalization)
         images = base.ImageRGBD()
-        images.color = frames[0]
+        images.color = cv2.cvtColor(frames[0], cv2.COLOR_GRAY2RGB)
         images.depth = frames[1]
         return images
     
@@ -565,6 +565,7 @@ class RGBD(Depth):
             display.close("color")
             display.close("depth")
 
+
     def getCameraIntrinsics(self):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
@@ -575,3 +576,6 @@ class RGBD(Depth):
                 (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
+   
+
+
