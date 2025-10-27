@@ -478,7 +478,7 @@ class RGBD(Depth):
         '''
         frames = self.get_frames(normalization=True)
         images = base.ImageRGBD()
-        images.color = frames[0]
+        images.color = cv2.cvtColor(frames[0], cv2.COLOR_GRAY2RGB)
         images.depth = frames[1]
         return images
     

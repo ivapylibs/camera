@@ -136,7 +136,8 @@ class CameraToWorkspace:
             self.cam.capture()
         images = self.cam.capture()
         # get the gCW transformation
-        self.gCW = self.getgCW(images.color)
+        greyImg = cv2.cvtColor(images.color, cv2.COLOR_RGB2GRAY)
+        self.gCW = self.getgCW(greyImg)
         self.cam.stop()
         return self.gCW
 
