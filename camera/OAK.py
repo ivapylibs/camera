@@ -353,7 +353,7 @@ class Depth(base.Base):
 
         # normalize the depth frame
         if normalization:
-            normalizedDepthFrame = np.interp(depthFrame, (100, 1000), (0,255)).astype(np.uint8)
+            normalizedDepthFrame = np.interp(depthFrame, (10, 1000), (0,255)).astype(np.uint8)
             return normalizedDepthFrame
 
         return depthFrame
