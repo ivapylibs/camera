@@ -26,6 +26,18 @@ class ConfigRS205():
             # setup config struct
             self.config = {}
             # define each type of camera
+            self.config["colorCamera"] = {}
+            self.config["depthCamera"] = {}
+
+            # color camera properties
+            self.config["colorCamera"]["imageWidth"] = 640
+            self.config["colorCamera"]["imageHeight"] = 480
+            self.config["colorCamera"]["dataFormat"] = rs.format.bgr8
+
+            # depth camera properties
+            self.config["depthCamera"]["imageWidth"] = 640
+            self.config["depthCamera"]["imageHeight"] = 480
+            self.config["depthCamera"]["dataFormat"] = rs.format.z16
             
         else:
             self.config = config
@@ -56,12 +68,31 @@ class Color(base.Color):
     '''
     def __init__(self, configs=ConfigRS205()):
         super().__init__(configs=configs)
+
+        # setup the camera pipeline
+        self.pipeline = rs.pipeline()
+
+        # enable the color camera
+        self.config = rs.config()
+        self.config.enable_stream(rs.stream.color, self.configs.getConfig()["colorCamera"]["imageWidth"], self.configs.getConfig()["colorCamera"]["imageHeight"], self.configs.getConfig()["colorCamera"]["dataFormat"])
+
+        # get camera intrinsics
+        intrinsics = rs.intrinsics
+        self.cameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
+                                      [0, intrinsics.fy, intrinsics.ppy],
+                                      [0,0,1]])
+        self.distortionCoeffs = intrinsics.coeffs
+        self.K = self.cameraMatrix
+
+        # put ready to false since we have not started the camera
+        self.ready = False
         
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
         '''
         # setup device and device queues
+        self.pipeline.start(self.config)
         
         self.ready = True
         return self.ready
@@ -69,7 +100,8 @@ class Color(base.Color):
     def stop(self):
         '''Stop the capture stream and release the device from use
         '''
-        self.device = None
+        self.pipeline.stop()
+
         self.ready = False
 
     def get_configs(self):
@@ -78,34 +110,35 @@ class Color(base.Color):
     def set_configs(self, configs):
         super().set_configs(ConfigRS205(configs))
         # update the cameras. Ignore all depthCam values bc no depth cam
-        
+        previouslyReady = False
+        # stop the pipeline if the stream is currently on
+        if self.ready:
+            previouslyReady = True
+            self.stop()
+        # disable the stream
+        self.config.disable_stream(rs.stream.color)
+        # re-enable the stream with new parameters
+        self.config.enable_stream(rs.stream.color, self.configs.getConfig()["colorCamera"]["imageWidth"], self.configs.getConfig()["colorCamera"]["imageHeight"], self.configs.getConfig()["colorCamera"]["dataFormat"])
+        # if the pipeline was previously on, re-enable the pipeline
+        if previouslyReady:
+            self.start()
 
-    def set(self, cam, key, value):
-        '''Set a particular configuration
-
-        Args:
-            cam (any): name of the camera to config (monoLeftCam / monoRightCam)
-            key (any): The configuration name
-            value (any): The value to be set
-        '''
-        self.configs.setConfigParameter(cam, key, value)
-
-    def get_frames(self, getBothMonoFrames=False, scaleFactor=1):
+    def get_frames(self):
         ''' Gets the next frame
 
-        Args:
-            getBothMonoFrames (optional) : 
-                - if True -> returns both left and right frame
-                - if False -> returns only left frame
-            scaleFactor (optional) : scaling factor on outputted frame
-
         Returns:
-            - if getBothMonoFrames = False -> leftCameraImage
-            - if getBothMonoFrames = True -> tuple (leftCameraImage, rightCameraImage)
+            frame:
+                rgb color frame
         '''
         if not self.ready:
             return None, False
-    
+        
+        # get the latest frame
+        frames = self.pipeline.wait_for_frames()
+        colorFrame = frames.get_color_frame()
+        colorFrame = np.asanyarray(colorFrame.get_data())
+
+        return colorFrame
 
     def capture(self):
         '''Alias for get_frames
