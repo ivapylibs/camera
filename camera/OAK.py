@@ -174,7 +174,7 @@ class Color(base.Color):
     def capture(self):
         '''Alias for get_frames
         '''
-        return self.get_frames
+        return self.get_frames()
     
     def display(self, frame, windowName='frame'):
         cv2.imshow(windowName, frame)
@@ -322,7 +322,7 @@ class Depth(base.Base):
     def capture(self):
         '''Alias for get_frames
         '''
-        return self.get_frames
+        return self.get_frames()
     
     def display(self, frame, windowName='frame'):
         cv2.imshow(windowName, frame)
@@ -414,10 +414,14 @@ class RGBD(Depth):
         else:
             return (monoLeftFrame, super().get_frames(normalization=normalization, scaleFactor=scaleFactor*2))
         
-    def capture(self):
-        '''Gets RGBD frames in ImageRGBD() class format
+    def capture(self, normalization=True):
+        '''Gets RGBD frames in ImageRGBD() class format.
+        Args:
+            normalization (bool):
+                - if True, the depth frame will be normalized to 0-255 for better visulaization
+                - if False, the depth frame will not be normalized and is returned in units of mm
         '''
-        frames = self.get_frames(normalization=True)
+        frames = self.get_frames(normalization=normalization)
         images = base.ImageRGBD()
         images.color = frames[0]
         images.depth = frames[1]
