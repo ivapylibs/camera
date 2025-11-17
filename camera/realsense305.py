@@ -61,7 +61,10 @@ class ConfigRS305(base.CfgCamera):
 
 
 class Color(base.Color):
-    '''Realsense305 class to caputre images (there are no color images for this camera)
+    '''Realsense305 class to caputre images
+    Args:
+        yamlInitFilePath (str):
+            path of yaml file to use for camera initialization
     '''
     def __init__(self, yamlInitFilePath:str=None):
         configs = ConfigRS305(yamlInitFilePath)
@@ -183,6 +186,9 @@ class Depth(base.Base):
     '''Realsense305 class to capture depth frames
 
     The depth images are aligned to the left camera by default class initialization
+    Args:
+        yamlInitFilePath (str):
+            path of yaml file to use for camera initialization
     '''
     def __init__(self, yamlInitFilePath:str=None):
         if yamlInitFilePath is None:
@@ -337,6 +343,9 @@ class RGBD(Depth):
     '''Realsense305 class to capture color images and depth
 
     The depth images are aligned to the color camera
+    Args:
+        yamlInitFilePath (str):
+            path of yaml file to use for camera initialization
     '''
     def __init__(self, yamlInitFilePath:str=None):
         super().__init__(yamlInitFilePath)
