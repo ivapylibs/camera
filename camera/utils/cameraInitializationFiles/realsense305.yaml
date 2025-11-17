@@ -1,0 +1,10 @@
+colorCamera:
+  imageWidth: 640
+  imageHeight: 480
+  dataFormat: 6      # rs.format.bgr8
+  FPS: 30
+depthCamera:
+  imageWidth: 640
+  imageHeight: 480
+  dataFormat: 1      # rs.format.z16
+  FPS: 30

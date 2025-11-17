@@ -14,45 +14,40 @@ import cv2
 import numpy as np
 import math
 import ivapy.display_cv as display
+import os
+import yaml
 
 
 
 
-class ConfigRS205():
+class ConfigRS305(base.CfgCamera):
     '''config general parameters of Realsense 305 camera
+    Args:
+        filePath (str):
+            path of yaml configuration file
     '''
-    def __init__(self, config=None):
-        if config is None:
-            # setup config struct
-            self.config = {}
-            # define each type of camera
-            self.config["colorCamera"] = {}
-            self.config["depthCamera"] = {}
-
-            # color camera properties
-            self.config["colorCamera"]["imageWidth"] = 640
-            self.config["colorCamera"]["imageHeight"] = 480
-            self.config["colorCamera"]["dataFormat"] = rs.format.bgr8
-            self.config["colorCamera"]["FPS"] = 30
-
-            # depth camera properties
-            self.config["depthCamera"]["imageWidth"] = 640
-            self.config["depthCamera"]["imageHeight"] = 480
-            self.config["depthCamera"]["dataFormat"] = rs.format.z16
-            self.config["depthCamera"]["FPS"] = 30
+    def __init__(self, yamlFilePath:str=None):
+        super().__init__(new_allowed=True)
+        # check if filePath is empty, if so we use default initialization
+        if yamlFilePath is None:
+            currentPath = os.path.dirname(os.path.realpath(__file__))
+            yamlFilePath = currentPath+"/utils/cameraInitializationFiles/realsense305.yaml"
             
-        else:
-            self.config = config
+        with open(yamlFilePath) as stream:
+            init = yaml.load(stream, yaml.SafeLoader)
 
-    def setConfig(self, config):
+        super().__init__(init)
+     
+
+    def setConfig(self, filePath:str):
         '''allows setting all configs at once
+        Args:
+        filePath (str):
+            path of yaml configuration file
         '''
-        self.config = config
+        self.clear()
+        self.merge_from_file(filePath)
 
-    def getConfig(self):
-        '''returns config dictionary
-        '''
-        return self.config
     
     def setConfigParameter(self, cam, param, value):
         '''allows the setting of a specific parameter of a camera to a certain value
@@ -62,13 +57,14 @@ class ConfigRS205():
             param (any): name of camera parameter
             value (any): value to set parameter to
         '''
-        self.config[cam][param] = value
+        self[cam][param] = value
 
 
 class Color(base.Color):
     '''Realsense305 class to caputre images (there are no color images for this camera)
     '''
-    def __init__(self, configs=ConfigRS205()):
+    def __init__(self, yamlInitFilePath:str=None):
+        configs = ConfigRS305(yamlInitFilePath)
         super().__init__(configs=configs)
 
         # setup the camera pipeline
@@ -77,10 +73,10 @@ class Color(base.Color):
         # enable the color camera
         self.config = rs.config()
         self.config.enable_stream(rs.stream.color, 
-                                  self.configs.getConfig()["colorCamera"]["imageWidth"],
-                                  self.configs.getConfig()["colorCamera"]["imageHeight"], 
-                                  self.configs.getConfig()["colorCamera"]["dataFormat"], 
-                                  self.configs.getConfig()["colorCamera"]["FPS"])
+                                  self.configs["colorCamera"]["imageWidth"],
+                                  self.configs["colorCamera"]["imageHeight"], 
+                                  self.configs["colorCamera"]["dataFormat"], 
+                                  self.configs["colorCamera"]["FPS"])
 
         # get camera intrinsics
         intrinsics = rs.intrinsics
@@ -115,16 +111,16 @@ class Color(base.Color):
     def get_configs(self):
         '''Returns all of the configs for the camera
         '''
-        return super().get_configs().getConfig()
+        return super().get_configs()
     
     
-    def set_configs(self, configs):
+    def set_configs(self, yamlFilePath:str):
         '''Re-sets all of the configs for the camera
         Args:
-            configs (dict):
-                dictionary of all of the configs for the camera
+            yamlFilePath (str):
+                path of yaml configuration file
         '''
-        super().set_configs(ConfigRS205(configs))
+        super().set_configs(ConfigRS305(yamlFilePath))
         # update the cameras. Ignore all depthCam values bc no depth cam
         previouslyReady = False
         # stop the pipeline if the stream is currently on
@@ -135,10 +131,10 @@ class Color(base.Color):
         self.config.disable_stream(rs.stream.color)
         # re-enable the stream with new parameters
         self.config.enable_stream(rs.stream.color,
-                                  self.configs.getConfig()["colorCamera"]["imageWidth"],
-                                  self.configs.getConfig()["colorCamera"]["imageHeight"],
-                                  self.configs.getConfig()["colorCamera"]["dataFormat"],
-                                  self.configs.getConfig()["colorCamera"]["FPS"])
+                                  self.configs["colorCamera"]["imageWidth"],
+                                  self.configs["colorCamera"]["imageHeight"],
+                                  self.configs["colorCamera"]["dataFormat"],
+                                  self.configs["colorCamera"]["FPS"])
         # if the pipeline was previously on, re-enable the pipeline
         if previouslyReady:
             self.start()
@@ -177,16 +173,10 @@ class Color(base.Color):
         cv2.imshow(windowName, frame)
     
 
-    def fancyPrintConfigs(self):
+    def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
-        cfg = self.configs.getConfig()
-        keys = list(cfg.keys())
-        for key in keys:
-            subKeys = list(cfg[key].keys())
-            print(key)
-            for subKey in subKeys:
-                print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
+        print(self.configs)
 
 
 class Depth(base.Base):
@@ -194,8 +184,10 @@ class Depth(base.Base):
 
     The depth images are aligned to the left camera by default class initialization
     '''
-    def __init__(self, configs=ConfigRS205()):
-        super().__init__(configs=configs)
+    def __init__(self, yamlInitFilePath:str=None):
+        if yamlInitFilePath is None:
+            configs = ConfigRS305(yamlInitFilePath)
+            super().__init__(configs=configs)
 
         # setup the camera pipeline
         self.pipeline = rs.pipeline()
@@ -203,17 +195,17 @@ class Depth(base.Base):
         # enable the depth camera
         self.config = rs.config()
         self.config.enable_stream(rs.stream.depth, 
-                                  self.configs.getConfig()["depthCamera"]["imageWidth"],
-                                  self.configs.getConfig()["depthCamera"]["imageHeight"], 
-                                  self.configs.getConfig()["depthCamera"]["dataFormat"], 
-                                  self.configs.getConfig()["depthCamera"]["FPS"])
+                                  self.configs["depthCamera"]["imageWidth"],
+                                  self.configs["depthCamera"]["imageHeight"], 
+                                  rs.format(self.configs["depthCamera"]["dataFormat"]), 
+                                  self.configs["depthCamera"]["FPS"])
         
         # enable the color camera for depth alignment
         self.config.enable_stream(rs.stream.color,
-                                  self.configs.getConfig()["colorCamera"]["imageWidth"],
-                                  self.configs.getConfig()["colorCamera"]["imageHeight"],
-                                  self.configs.getConfig()["colorCamera"]["dataFormat"],
-                                  self.configs.getConfig()["colorCamera"]["FPS"])
+                                  self.configs["colorCamera"]["imageWidth"],
+                                  self.configs["colorCamera"]["imageHeight"],
+                                  rs.format(self.configs["colorCamera"]["dataFormat"]),
+                                  self.configs["colorCamera"]["FPS"])
 
         # get camera intrinsics
         intrinsics = rs.intrinsics
@@ -258,16 +250,16 @@ class Depth(base.Base):
     def get_configs(self):
         '''Returns all of the configs for the camera
         '''
-        return super().get_configs().getConfig()
+        return super().get_configs()
     
     
-    def set_configs(self, configs):
+    def set_configs(self, yamlFilePath:str):
         '''Re-sets all of the configs for the camera
         Args:
-            configs (dict):
-                dictionary of all of the configs for the camera
+            yamlFilePath (str):
+                path of yaml configuration file
         '''
-        super().set_configs(ConfigRS205(configs))
+        super().set_configs(ConfigRS305(yamlFilePath))
         # update the cameras. Ignore all depthCam values bc no depth cam
         previouslyReady = False
         # stop the pipeline if the stream is currently on
@@ -278,10 +270,10 @@ class Depth(base.Base):
         self.config.disable_stream(rs.stream.color)
         # re-enable the stream with new parameters
         self.config.enable_stream(rs.stream.color,
-                                  self.configs.getConfig()["depthCamera"]["imageWidth"],
-                                  self.configs.getConfig()["depthCamera"]["imageHeight"],
-                                  self.configs.getConfig()["depthCamera"]["dataFormat"],
-                                  self.configs.getConfig()["depthCamera"]["FPS"])
+                                  self.configs["depthCamera"]["imageWidth"],
+                                  self.configs["depthCamera"]["imageHeight"],
+                                  self.configs["depthCamera"]["dataFormat"],
+                                  self.configs["depthCamera"]["FPS"])
         # if the pipeline was previously on, re-enable the pipeline
         if previouslyReady:
             self.start()
@@ -321,6 +313,7 @@ class Depth(base.Base):
         '''
         return self.get_frames()
     
+    
     def display(self, frame, windowName='frame'):
         '''Displays an image
         Args:
@@ -331,16 +324,13 @@ class Depth(base.Base):
         '''
         cv2.imshow(windowName, frame)
 
-    def fancyPrintConfigs(self):
+
+    def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
-        cfg = self.configs.getConfig()
-        keys = list(cfg.keys())
-        for key in keys:
-            subKeys = list(cfg[key].keys())
-            print(key)
-            for subKey in subKeys:
-                print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
+        print(self.configs)
+
+
 
 
 class RGBD(Depth):
@@ -348,21 +338,9 @@ class RGBD(Depth):
 
     The depth images are aligned to the color camera
     '''
-    def __init__(self, configs=ConfigRS205()):
-        super().__init__(configs=configs)
+    def __init__(self, yamlInitFilePath:str=None):
+        super().__init__(yamlInitFilePath)
         
-
-    # def start(self):
-    #     '''Start the capture stream. This must be called before get_frames() or capture()
-    #     '''
-    #     # setup device queues
-    #     return super().start()
-
-
-    # def stop(self):
-    #     '''Stop the capture stream and release the device from use
-    #     '''
-    #     super().stop()
 
     def get_frames(self, normalization=False):
         '''Gets the next frame.
@@ -397,7 +375,6 @@ class RGBD(Depth):
         return colorFrame, depthFrame
 
         
-        
     def capture(self, normalization=True):
         '''Gets RGBD frames in ImageRGBD() class format
         Args:
@@ -424,7 +401,6 @@ class RGBD(Depth):
                 - true -> automatically show raw data
                 - false -> do NOT automatically show raw data
         '''
-        
         self.start()
 
         while True:
