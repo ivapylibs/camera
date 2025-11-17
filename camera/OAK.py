@@ -14,42 +14,24 @@ import cv2
 import numpy as np
 import math
 import ivapy.display_cv as display
+import os
+import yaml
 
 
-class ConfigOak():
+class ConfigOak(base.CfgCamera):
     '''config general parameters of OAK camera
     '''
-    def __init__(self, config=None):
-        if config is None:
-            # setup config struct
-            self.config = {}
-            # define each type of camera
-            self.config["monoLeftCam"] = {}
-            self.config["monoRightCam"] = {}
-            self.config["depthCam"] = {}
-            self.config["spatialLocationCalculator"] = {}
-
-            # config monoLeftCam properies
-            self.config["monoLeftCam"]["resolution"] = dai.MonoCameraProperties.SensorResolution.THE_400_P
-            self.config["monoLeftCam"]["setSide"] = "left"
-
-            # config monoRightCam Properties
-            self.config["monoRightCam"]["resolution"] = dai.MonoCameraProperties.SensorResolution.THE_400_P
-            self.config["monoRightCam"]["setSide"] = "right"
-
-            # config depthCam properties
-            self.config["depthCam"]["leftRightCheck"] = True
-            self.config["depthCam"]["subpixel"] = True
-            self.config["depthCam"]["defaultProfilePreset"] = dai.node.StereoDepth.PresetMode.DEFAULT
-            self.config["depthCam"]["setDepthAlign"] = dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign.RECTIFIED_LEFT
+    def __init__(self, yamlFilePath:str=None):
+        super().__init__(new_allowed=True)
+        # check if filePath is empty, if so we use default initialization
+        if yamlFilePath is None:
+            currentPath = os.path.dirname(os.path.realpath(__file__))
+            yamlFilePath = currentPath+"/utils/cameraInitializationFiles/oak.yaml"
             
-            # config spatialLocationCalculator
-            self.config["spatialLocationCalculator"]["roiTopLeft"] = dai.Point2f(0.4, 0.4)
-            self.config["spatialLocationCalculator"]["roiBottomRight"] = dai.Point2f(0.6, 0.6)
-            self.config["spatialLocationCalculator"]["lowerDepthThreshold"] = 100           # this is in mm
-            self.config["spatialLocationCalculator"]["upperDepthThreshold"] = 1000          # this is in mm
-        else:
-            self.config = config
+        with open(yamlFilePath) as stream:
+            init = yaml.load(stream, yaml.SafeLoader)
+
+        super().__init__(init)
 
     def setConfig(self, config):
         '''allows setting all configs at once
@@ -94,13 +76,23 @@ class Color(base.Color):
         self.monoRightCam.out.link(self.monoRightXlink.input)
 
         # configure the cameras with all of the configs
-        self.monoLeftCam.setResolution(self.get_configs()['monoLeftCam']['resolution'])
-        self.monoLeftCam.setCamera(self.get_configs()['monoLeftCam']['setSide'])
-        self.monoRightCam.setResolution(self.get_configs()['monoRightCam']['resolution'])
-        self.monoRightCam.setCamera(self.get_configs()['monoRightCam']['setSide'])
+        self.monoLeftCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoLeftCam']['resolution']))
+        self.monoLeftCam.setCamera("left") #self.configs['monoLeftCam']['setSide'])
+        self.monoRightCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoRightCam']['resolution']))
+        self.monoRightCam.setCamera(self.configs['monoRightCam']['setSide'])
 
         # not ready until start is called
         self.ready = False
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
+
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
@@ -119,15 +111,15 @@ class Color(base.Color):
         self.ready = False
 
     def get_configs(self):
-        return super().get_configs().getConfig()
+        return super().configs.getConfig()
     
     def set_configs(self, configs):
         super().set_configs(ConfigOak(configs))
         # update the cameras. Ignore all depthCam values bc no depth cam
-        self.monoLeftCam.setResolution(self.get_configs()['monoLeftCam']['resolution'])
-        self.monoLeftCam.setCamera(self.get_configs()['monoLeftCam']['setSide'])
-        self.monoRightCam.setResolution(self.get_configs()['monoRightCam']['resolution'])
-        self.monoRightCam.setCamera(self.get_configs()['monoRightCam']['setSide'])
+        self.monoLeftCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoLeftCam']['resolution']))
+        self.monoLeftCam.setCamera(self.configs['monoLeftCam']['setSide'])
+        self.monoRightCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoRightCam']['resolution']))
+        self.monoRightCam.setCamera(self.configs['monoRightCam']['setSide'])
 
     def set(self, cam, key, value):
         '''Set a particular configuration
@@ -179,16 +171,21 @@ class Color(base.Color):
     def display(self, frame, windowName='frame'):
         cv2.imshow(windowName, frame)
     
-    def fancyPrintConfigs(self):
+    def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
-        cfg = self.configs.getConfig()
-        keys = list(cfg.keys())
-        for key in keys:
-            subKeys = list(cfg[key].keys())
-            print(key)
-            for subKey in subKeys:
-                print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
+        print(self.configs)
+
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
 
 class Depth(base.Base):
     '''OAK class to capture depth frames
@@ -222,24 +219,44 @@ class Depth(base.Base):
         self.spatialCalcConfigXLink.out.link(self.spatialLocationCalculator.inputConfig)
 
         # configure the cameras with all of the configs
-        self.monoLeftCam.setResolution(self.get_configs()['monoLeftCam']['resolution'])
-        self.monoLeftCam.setCamera(self.get_configs()['monoLeftCam']['setSide'])
-        self.monoRightCam.setResolution(self.get_configs()['monoRightCam']['resolution'])
-        self.monoRightCam.setCamera(self.get_configs()['monoRightCam']['setSide'])
-        self.depthCam.setDefaultProfilePreset(self.get_configs()['depthCam']['defaultProfilePreset'])
-        self.depthCam.setLeftRightCheck(self.get_configs()['depthCam']['leftRightCheck'])
-        self.depthCam.setSubpixel(self.get_configs()['depthCam']['subpixel'])
+        self.monoLeftCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoLeftCam']['resolution']))
+        self.monoLeftCam.setCamera(self.configs['monoLeftCam']['setSide'])
+        self.monoRightCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoRightCam']['resolution']))
+        self.monoRightCam.setCamera(self.configs['monoRightCam']['setSide'])
+        self.depthCam.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode(self.configs['depthCam']['defaultProfilePreset']))
+        self.depthCam.setLeftRightCheck(self.configs['depthCam']['leftRightCheck'])
+        self.depthCam.setSubpixel(self.configs['depthCam']['subpixel'])
         config = dai.SpatialLocationCalculatorConfigData()
-        config.depthThresholds.lowerThreshold = self.get_configs()["spatialLocationCalculator"]["lowerDepthThreshold"]
-        config.depthThresholds.upperThreshold = self.get_configs()["spatialLocationCalculator"]["upperDepthThreshold"]
+        config.depthThresholds.lowerThreshold = self.configs["spatialLocationCalculator"]["lowerDepthThreshold"]
+        config.depthThresholds.upperThreshold = self.configs["spatialLocationCalculator"]["upperDepthThreshold"]
         self.calculationAlgorithm = dai.SpatialLocationCalculatorAlgorithm.MEDIAN
-        config.roi = dai.Rect(self.get_configs()["spatialLocationCalculator"]["roiTopLeft"], self.get_configs()["spatialLocationCalculator"]["roiBottomRight"])
+        left = self.configs["spatialLocationCalculator"]["roiTopLeft"]
+        right = self.configs["spatialLocationCalculator"]["roiBottomRight"]
+        config.roi = dai.Rect(dai.Point2f(left[0], left[1]), dai.Point2f(right[0], right[1]))
         self.spatialLocationCalculator.inputConfig.setWaitForMessage(False)
         self.spatialLocationCalculator.initialConfig.addROI(config)
-        self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
+        self.depthCam.setDepthAlign(dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign(self.configs["depthCam"]["setDepthAlign"]))
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
 
         # not ready until start is called
         self.ready = False
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
@@ -260,26 +277,28 @@ class Depth(base.Base):
         self.ready = False
 
     def get_configs(self):
-        return super().get_configs().getConfig()
+        return super().configs.getConfig()
     
     def set_configs(self, configs):
         super().set_configs(ConfigOak(configs))
         # update the cameras
-        self.monoLeftCam.setResolution(self.get_configs()['monoLeftCam']['resolution'])
-        self.monoLeftCam.setCamera(self.get_configs()['monoLeftCam']['setSide'])
-        self.monoRightCam.setResolution(self.get_configs()['monoRightCam']['resolution'])
-        self.monoRightCam.setCamera(self.get_configs()['monoRightCam']['setSide'])
-        self.depthCam.setDefaultProfilePreset(self.get_configs()['depthCam']['defaultProfilePreset'])
-        self.depthCam.setLeftRightCheck(self.get_configs()['depthCam']['leftRightCheck'])
-        self.depthCam.setSubpixel(self.get_configs()['depthCam']['subpixel'])
+        self.monoLeftCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoLeftCam']['resolution']))
+        self.monoLeftCam.setCamera(self.configs['monoLeftCam']['setSide'])
+        self.monoRightCam.setResolution(dai.MonoCameraProperties.SensorResolution(self.configs['monoRightCam']['resolution']))
+        self.monoRightCam.setCamera(self.configs['monoRightCam']['setSide'])
+        self.depthCam.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode(self.configs['depthCam']['defaultProfilePreset']))
+        self.depthCam.setLeftRightCheck(self.configs['depthCam']['leftRightCheck'])
+        self.depthCam.setSubpixel(self.configs['depthCam']['subpixel'])
         config = dai.SpatialLocationCalculatorConfigData()
-        config.depthThresholds.lowerThreshold = self.get_configs()["spatialLocationCalculator"]["lowerDepthThreshold"]
-        config.depthThresholds.upperThreshold = self.get_configs()["spatialLocationCalculator"]["upperDepthThreshold"]
+        config.depthThresholds.lowerThreshold = self.configs["spatialLocationCalculator"]["lowerDepthThreshold"]
+        config.depthThresholds.upperThreshold = self.configs["spatialLocationCalculator"]["upperDepthThreshold"]
         self.calculationAlgorithm = dai.SpatialLocationCalculatorAlgorithm.MEDIAN
-        config.roi = dai.Rect(self.get_configs()["spatialLocationCalculator"]["roiTopLeft"], self.get_configs()["spatialLocationCalculator"]["roiBottomRight"])
+        left = self.configs["spatialLocationCalculator"]["roiTopLeft"]
+        right = self.configs["spatialLocationCalculator"]["roiBottomRight"]
+        config.roi = dai.Rect(dai.Point2f(left[0], left[1]), dai.Point2f(right[0], right[1]))
         self.spatialLocationCalculator.inputConfig.setWaitForMessage(False)
         self.spatialLocationCalculator.initialConfig.addROI(config)
-        self.depthCam.setDepthAlign(self.get_configs()["depthCam"]["setDepthAlign"])
+        self.depthCam.setDepthAlign(dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign(self.configs["depthCam"]["setDepthAlign"]))
 
     def set(self, cam, key, value):
         '''Set a particular configuration
@@ -314,7 +333,7 @@ class Depth(base.Base):
 
         # normalize the depth frame
         if normalization:
-            normalizedDepthFrame = np.interp(depthFrame, (100, 1000), (0,255)).astype(np.uint8)
+            normalizedDepthFrame = np.interp(depthFrame, (10, 1000), (0,255)).astype(np.uint8)
             return normalizedDepthFrame
 
         return depthFrame
@@ -327,16 +346,21 @@ class Depth(base.Base):
     def display(self, frame, windowName='frame'):
         cv2.imshow(windowName, frame)
 
-    def fancyPrintConfigs(self):
+    def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
-        cfg = self.configs.getConfig()
-        keys = list(cfg.keys())
-        for key in keys:
-            subKeys = list(cfg[key].keys())
-            print(key)
-            for subKey in subKeys:
-                print("  - ", subKey, " "*(22 - len(subKey)), ": ", cfg[key][subKey])
+        print(self.configs)
+
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
 
 
 class RGBD(Depth):
@@ -356,6 +380,15 @@ class RGBD(Depth):
         # link the mono cams to xlink
         self.monoLeftCam.out.link(self.monoLeftXLink.input)
         self.monoRightCam.out.link(self.monoRightXLink.input)
+
+        # get and store the camera intrinsics
+        with dai.Device(self.pipeline) as device:
+            calibdata = device.readCalibration()
+            leftMtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B, resizeWidth=640, resizeHeight=400)
+            distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
+        self.K = leftMtx
+        self.cameraMatrix = leftMtx
+        self.distortionCoeffs = distCoeffs
 
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
@@ -423,7 +456,7 @@ class RGBD(Depth):
         '''
         frames = self.get_frames(normalization=normalization)
         images = base.ImageRGBD()
-        images.color = frames[0]
+        images.color = cv2.cvtColor(frames[0], cv2.COLOR_GRAY2RGB)
         images.depth = frames[1]
         return images
     
@@ -509,3 +542,18 @@ class RGBD(Depth):
         if figOut:
             display.close("color")
             display.close("depth")
+
+
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
+   
+
+
