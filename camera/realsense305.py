@@ -182,6 +182,18 @@ class Color(base.Color):
         print(self.configs)
 
 
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
+
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
+
+
 class Depth(base.Base):
     '''Realsense305 class to capture depth frames
 
@@ -335,8 +347,18 @@ class Depth(base.Base):
         '''Prints out the configurations in a more human readable way
         '''
         print(self.configs)
+        
 
+    def getCameraIntrinsics(self):
+        '''Returns the intrinsic camera matrix and distortion coefficients
 
+        Returns:
+            cameraMatrix:
+            distortionCoeffs :
+                (list (3,3)) intrinsice camera matrix distortionCoeffs 
+                (list (,14)) distortion coefficients of the camera
+        '''
+        return self.cameraMatrix, self.distortionCoeffs
 
 
 class RGBD(Depth):
