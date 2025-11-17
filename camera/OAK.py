@@ -448,7 +448,11 @@ class RGBD(Depth):
             return (monoLeftFrame, super().get_frames(normalization=normalization, scaleFactor=scaleFactor*2))
         
     def capture(self, normalization=True):
-        '''Gets RGBD frames in ImageRGBD() class format
+        '''Gets RGBD frames in ImageRGBD() class format.
+        Args:
+            normalization (bool):
+                - if True, the depth frame will be normalized to 0-255 for better visulaization
+                - if False, the depth frame will not be normalized and is returned in units of mm
         '''
         frames = self.get_frames(normalization=normalization)
         images = base.ImageRGBD()
