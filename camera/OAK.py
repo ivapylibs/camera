@@ -186,6 +186,7 @@ class Color(base.Color):
                 (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
+    
 
 class Depth(base.Base):
     '''OAK class to capture depth frames
@@ -320,7 +321,7 @@ class Depth(base.Base):
                 - if False -> raw depth frame will be returned
             scaleFactor (optional) : scaling factor on outputted frame
         Returns:
-            depth frame in units of [mm] if not normalized
+            depth frame in units of [m] if not normalized
                 - if normalized, range will be from [0,255]
         '''
         if not self.ready:
@@ -336,6 +337,8 @@ class Depth(base.Base):
             normalizedDepthFrame = np.interp(depthFrame, (10, 1000), (0,255)).astype(np.uint8)
             return normalizedDepthFrame
 
+        # convert to meters
+        depthFrame = depthFrame/1000
         return depthFrame
     
     def capture(self):
@@ -425,7 +428,7 @@ class RGBD(Depth):
             - if getBothMonoFrames = True -> ((monoLeftFrame, monoRightFrame), depthFrame, True)
             - if getBothMonoFrames = False -> (monoLeftFrame, depthFrame, True)
 
-            depth frame in units of [mm] if not normalized
+            depth frame in units of [m] if not normalized
                 - if normalized, range will be from [0,255]
         '''
         if not self.ready:

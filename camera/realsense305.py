@@ -82,12 +82,18 @@ class Color(base.Color):
                                   self.configs["colorCamera"]["FPS"])
 
         # get camera intrinsics
-        intrinsics = rs.intrinsics
+        profile = self.pipeline.start(self.config)
+        colorProfile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
+        intrinsics = colorProfile.get_intrinsics()
         self.cameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
                                       [0, intrinsics.fy, intrinsics.ppy],
                                       [0,0,1]])
         self.distortionCoeffs = intrinsics.coeffs
+        for i in range(14-len(self.distortionCoeffs)):
+            self.distortionCoeffs.append(0)
+        self.distortionCoeffs = np.array(self.distortionCoeffs)
         self.K = self.cameraMatrix
+        self.pipeline.stop()
 
         # put ready to false since we have not started the camera
         self.ready = False
@@ -192,6 +198,13 @@ class Color(base.Color):
                 (list (,14)) distortion coefficients of the camera
         '''
         return self.cameraMatrix, self.distortionCoeffs
+    
+    def getImagePixelWidthAndHeight(self) -> tuple :
+        '''Returns the width and heigh of the color image
+        Returns:
+            (imageWidth, imageHeight) (int, int):
+        '''
+        return self.configs["colorCamera"]["imageWidth"], self.configs["colorCamera"]["imageHeight"]
 
 
 class Depth(base.Base):
@@ -225,16 +238,41 @@ class Depth(base.Base):
                                   rs.format(self.configs["colorCamera"]["dataFormat"]),
                                   self.configs["colorCamera"]["FPS"])
 
+         # need to align the depth frame with the color camera
+        self.align = rs.align(rs.stream.color)
+
         # get camera intrinsics
-        intrinsics = rs.intrinsics
+        profile = self.pipeline.start(self.config)
+        frames = self.pipeline.wait_for_frames()
+        # align depth to color
+        frames = self.align.process(frames)
+        # get depth and color frame
+        depthFrame = frames.get_depth_frame()
+        colorFrame = frames.get_color_frame()
+        intrinsics = colorFrame.profile.as_video_stream_profile().intrinsics
         self.cameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
                                       [0, intrinsics.fy, intrinsics.ppy],
                                       [0,0,1]])
         self.distortionCoeffs = intrinsics.coeffs
+        for i in range(14-len(self.distortionCoeffs)):
+            self.distortionCoeffs.append(0)
+        self.distortionCoeffs = np.array(self.distortionCoeffs)
         self.K = self.cameraMatrix
+    
+        # get depth camera instrinsics
+        depthProfile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
+        intrinsics = depthProfile.get_intrinsics()
+        self.depthCameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
+                                      [0, intrinsics.fy, intrinsics.ppy],
+                                      [0,0,1]])
+        self.depthDistortionCoeffs = intrinsics.coeffs
+        for i in range(14-len(self.depthDistortionCoeffs)):
+            self.depthDistortionCoeffs.append(0)
+        self.depthDistortionCoeffs = np.array(self.depthDistortionCoeffs)
+        
+        self.pipeline.stop()
 
-        # need to align the depth frame with the color camera
-        self.align = rs.align(rs.stream.color)
+       
 
         # conversion of sensor units to meters
         self.depthScale = None
@@ -347,18 +385,22 @@ class Depth(base.Base):
         '''Prints out the configurations in a more human readable way
         '''
         print(self.configs)
-        
+
 
     def getCameraIntrinsics(self):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
         Returns:
-            cameraMatrix:
-            distortionCoeffs :
-                (list (3,3)) intrinsice camera matrix distortionCoeffs 
-                (list (,14)) distortion coefficients of the camera
+            (cameraMatrix, distortionCoeffs) (ndarray (3,3), ndarray(,14)):
         '''
         return self.cameraMatrix, self.distortionCoeffs
+    
+    def getImagePixelWidthAndHeight(self) -> tuple :
+        '''Returns the width and heigh of the color image
+        Returns:
+            (imageWidth, imageHeight) (int, int):
+        '''
+        return self.configs["colorCamera"]["imageWidth"], self.configs["colorCamera"]["imageHeight"]
 
 
 class RGBD(Depth):

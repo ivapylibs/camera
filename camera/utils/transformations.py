@@ -1,4 +1,5 @@
 import numpy as np
+import camera.realsense305 as rs305
 
 def workspaceToPixel(coordinates, gCW = None, camMTX = None):
     '''calculates the pixel coordinates given the world coordinates.
@@ -25,7 +26,7 @@ def workspaceToPixel(coordinates, gCW = None, camMTX = None):
 
 
 
-def pixelToWorkspace(coordinates, depthMap, gWC = None, camMTX = None):
+def pixelToWorkspace(coordinates:np.ndarray, depthMap:np.ndarray, gWC:np.ndarray, camMTX:np.ndarray):
     '''calculates the workspace coordinates given pixel coordinates and a depth map
     @param coordinates [in]: an ndarray of the u,v coordinates of a pixel in an image
     @param gWC [in] : an ndarray (4, 4) of the transformation from camera to workspace
@@ -40,10 +41,14 @@ def pixelToWorkspace(coordinates, depthMap, gWC = None, camMTX = None):
     Returns:
         an ndarray (3,1) of the X,Y,Z coordinates in the workspace frame
     '''
+
     # grab z in camera frame
     zFromDepth = depthMap[coordinates[1][0], coordinates[0][0]]
     # make in units of meters
-    zFromDepth = zFromDepth/1000
+    zFromDepth = zFromDepth#/1000
+    print(zFromDepth)
+    print("transforms.py -> need to fix pixelToWorkspace for all cameras")
+    #NOTE: Need to make the depth map not dependant on mm, but insteand in units of meters
 
     # setup coordinates as homogeneous coordinates
     coords = np.array([[coordinates[0][0]*zFromDepth], [coordinates[1][0]*zFromDepth], [zFromDepth]])

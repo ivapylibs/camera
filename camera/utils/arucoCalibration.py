@@ -65,6 +65,8 @@ class CameraToWorkspace:
                     mtx, distCoeffs = cam.getCameraIntrinsics()
                     intrinsicDict["mtx"] = mtx
                     intrinsicDict['distCoeffs'] = distCoeffs
+                    print("camera intrinsic matrix: ", mtx)
+                    print("camera distortion coefficients: ", distCoeffs)
                 except NameError:
                     intrinsicDict['mtx'] = cam.K
                     intrinsicDict['distCoeffs'] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -134,7 +136,7 @@ class CameraToWorkspace:
         start = time.time()
         while start+5 > time.time():
             self.cam.capture()
-        images = self.cam.capture()
+        images = self.cam.capture(normalization=False)
         # get the gCW transformation
         greyImg = cv2.cvtColor(images.color, cv2.COLOR_RGB2GRAY)
         self.gCW = self.getgCW(greyImg)
@@ -168,6 +170,8 @@ class CameraToWorkspace:
         gCW = np.identity(4)
         gCW[:3, :3] = roationMTX
         gCW[:3, 3] = np.reshape(tvecs, (3,))
+        print(gCW)
+        print("=====================")
         return gCW
     
     def getCameraMatrix(self):
