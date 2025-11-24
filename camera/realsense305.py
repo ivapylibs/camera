@@ -249,6 +249,7 @@ class Depth(base.Base):
                                   self.configs["depthCamera"]["imageHeight"], " ,",
                                   rs.format(self.configs["depthCamera"]["dataFormat"]), " ,",
                                   self.configs["depthCamera"]["FPS"])
+            print(type(self.configs["depthCamera"]["imageHeight"]))
             exit()
         frames = self.pipeline.wait_for_frames()
         # align depth to color
