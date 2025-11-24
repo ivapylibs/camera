@@ -14,7 +14,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "pyrealsense2",
+        "pyrealsense2==2.54.2.5684",
         "numpy",
         "matplotlib",
         "opencv-contrib-python>=4.5.5.62",
