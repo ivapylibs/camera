@@ -242,7 +242,11 @@ class Depth(base.Base):
         self.align = rs.align(rs.stream.color)
 
         # get camera intrinsics
-        profile = self.pipeline.start(self.config)
+        try:
+            profile = self.pipeline.start(self.config)
+        except:
+            print(self.config)
+            exit()
         frames = self.pipeline.wait_for_frames()
         # align depth to color
         frames = self.align.process(frames)
