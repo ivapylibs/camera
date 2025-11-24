@@ -46,9 +46,6 @@ def pixelToWorkspace(coordinates:np.ndarray, depthMap:np.ndarray, gWC:np.ndarray
     zFromDepth = depthMap[coordinates[1][0], coordinates[0][0]]
     # make in units of meters
     zFromDepth = zFromDepth#/1000
-    print(zFromDepth)
-    print("transforms.py -> need to fix pixelToWorkspace for all cameras")
-    #NOTE: Need to make the depth map not dependant on mm, but insteand in units of meters
 
     # setup coordinates as homogeneous coordinates
     coords = np.array([[coordinates[0][0]*zFromDepth], [coordinates[1][0]*zFromDepth], [zFromDepth]])

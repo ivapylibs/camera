@@ -16,7 +16,7 @@ setup(
         "pyrealsense2",
         "numpy",
         "matplotlib",
-        "opencv-contrib-python==4.5.5.62",
+        "opencv-contrib-python>=4.5.5.62",
         "scikit-learn",
         "tqdm",
         "improcessor @ git+https://github.com/ivapylibs/improcessor.git",
