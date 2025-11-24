@@ -245,7 +245,10 @@ class Depth(base.Base):
         try:
             profile = self.pipeline.start(self.config)
         except:
-            print(self.config)
+            print(self.configs["depthCamera"]["imageWidth"], " ,",
+                                  self.configs["depthCamera"]["imageHeight"], " ,",
+                                  rs.format(self.configs["depthCamera"]["dataFormat"]), " ,",
+                                  self.configs["depthCamera"]["FPS"])
             exit()
         frames = self.pipeline.wait_for_frames()
         # align depth to color
