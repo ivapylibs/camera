@@ -1,0 +1,2 @@
+include camera/utiles/cameraInitializationFiles/oak.yaml
+include camera/utiles/cameraInitializationFiles/realsense305.yaml

@@ -12,6 +12,7 @@ setup(
     url="https://github.com/ivapylibs/camera",
     author="IVALab",
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         "pyrealsense2",
         "numpy",
