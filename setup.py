@@ -12,7 +12,7 @@ setup(
     url="https://github.com/ivapylibs/camera",
     author="IVALab",
     packages=find_packages(),
-    package_data={'': ['oak.yaml', 'realsense305.yaml']}
+    package_data={'': ['oak.yaml', 'realsense305.yaml']},
     install_requires=[
         "pyrealsense2",
         "numpy",
