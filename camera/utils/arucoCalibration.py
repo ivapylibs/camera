@@ -2,6 +2,8 @@
 @brief: class for aruco calibraiton and point transformations from workspace to camera
 
 @author: Kyle de Nobel
+
+@note: Comments above file are for Doxygen support and are the same as the docstrings.
 '''
 
 import cv2
@@ -9,16 +11,25 @@ import os
 import yaml
 import numpy as np
 import camera.OAK as oak
+from camera.base import Base
 import time
 
+
+## @brief Class for aruco calibration and point transformations from workspace to camera
+# @param[in] markerLength length of the aruco marker in meters
+# @param[in] cam camera used to gather frames
+# @param[in] cameraMatrix the intrinsic camera matrix
+# @param[in] distortionCoeffs the distortion coefficients of the camera
+# @param[in] calibrationLoops the number of times a frame needs to be read from the camera before the image is stable
+# @param[in] arucoDict the predefined aruco dictionary that the marker belongs to
 class CameraToWorkspace:
     def __init__(
             self,
-            markerLength,
-            cam = None,
+            markerLength:float,
+            cam:Base = None,
             cameraMatrix = None,
             distortionCoeffs = None,
-            calibrationLoops = 1000,
+            calibrationLoops:int = 1000,
             arucoDict=cv2.aruco.DICT_6X6_100
     ):
         '''
@@ -46,21 +57,6 @@ class CameraToWorkspace:
                 intrinsicDict = yaml.load(stream, Loader=yaml.FullLoader)
             # file does not exist or has not yet been created, so we must create it for future
             except FileNotFoundError:
-                # import depthai as dai
-                # # make pipeline
-                # pipeline = dai.Pipeline()
-
-                # # dictionary for output
-                # intrinsicDict = dict()
-
-                # # grab intrinsic data from device
-                # with dai.Device(pipeline) as device:
-                #     calibdata = device.readCalibration()
-                #     mtx = calibdata.getCameraIntrinsics(dai.CameraBoardSocket.CAM_B)
-                #     distCoeffs = calibdata.getDistortionCoefficients(dai.CameraBoardSocket.CAM_B)
-                # intrinsicDict["mtx"] = mtx
-                # intrinsicDict['distCoeffs'] = distCoeffs
-
                 try:
                     mtx, distCoeffs = cam.getCameraIntrinsics()
                     intrinsicDict["mtx"] = mtx
@@ -68,14 +64,6 @@ class CameraToWorkspace:
                 except NameError:
                     intrinsicDict['mtx'] = cam.K
                     intrinsicDict['distCoeffs'] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-
-                # # place data in yaml file
-                # try:
-                #     os.mkdir(dir_path+"/data")
-                # except FileExistsError:
-                #     pass
-                # stream = open(dir_path+'/data/intrinsic_data.yaml', 'x')
-                # yaml.dump(intrinsicDict, stream)
         
         # load camera Matrix if needed
         if cameraMatrix is None:
@@ -89,21 +77,44 @@ class CameraToWorkspace:
 
         # store parameters
         self.cameraMatrix = cameraMatrix
+        ## @var cameraMatrix 
+        # the intrinsic camera matrix
         self.distortionCoeffs = distortionCoeffs
+        ## @var distortionCoeffs 
+        # the camera distortion coefficients
         self.arucoDict = arucoDict
+        ## @var arucoDict
+        # the dictionary the aruco tag belongs to
         self.markerLength = markerLength
+        ## @var markerLength
+        # the length of the aruco marker in meters
         self.calibrationLoops = calibrationLoops
+        ## @var calibrationLoops 
+        # the number of frames to get before calibrating
         self.numberOfLoops = 0
+        ## @var numberOfLoops
+        # the number of loops currently run
         self.gCW = None
+        ## @var gCW
+        # the camera to world transformation matrix
         self.cam = cam
+        ## @var cam
+        # the camera to be used for calibration
 
         # make coordinate in middle of marker
         self.objPoints = np.array([[-self.markerLength/2, self.markerLength/2, 0],
                                    [self.markerLength/2, self.markerLength/2, 0],
                                    [self.markerLength/2, -self.markerLength/2, 0],
                                    [-self.markerLength/2, -self.markerLength/2, 0]])
+        ## @var objPoints
+        # the coordinates of the middle of the marker
 
-    def process(self, img, depth=None):
+
+    ## @brief Process function to calibrate extrinsic matrix from rgb and depth frame
+    # @param[in] img rgb image
+    # @param[in] depth depth map
+    # @return gCW
+    def process(self, img:np.ndarray, depth:np.ndarray =None):
         '''Process function to calibrate extrinsic matrix from rgb and depth frame
 
         Args:
@@ -111,8 +122,6 @@ class CameraToWorkspace:
             depth (np.ndarray (H, W), optional): Depth map. Not used
         Returns:
             gCW (np.ndarray (4,4)): Extrinsic aruco-to-camera transformation matrix
-            cornersAruco (np.ndarray): Detected aruco tag corners
-            imgWithExt (np.ndarray (H, W, 3)): Color image with aruco tag corrdinates
         '''
         # need to first stall process for some time for camera to clean image out
         if self.numberOfLoops < self.calibrationLoops:
@@ -123,7 +132,8 @@ class CameraToWorkspace:
         return self.gCW
 
 
-
+    ## @brief Calculate and return the transformation gCW
+    # @return gCW
     def calibrate(self):
         '''Calculate and return the transformation gCW
         Returns:
@@ -142,7 +152,9 @@ class CameraToWorkspace:
         return self.gCW
 
 
-
+    ## @brief gets the transformation from workspace to camera
+    # @param[in] bwImg black and white image containing an aruco tag
+    # @return gCW
     def getgCW(self, bwImg):
         '''gets the transformation from workspace to camera
         Args:
@@ -170,10 +182,24 @@ class CameraToWorkspace:
         gCW[:3, 3] = np.reshape(tvecs, (3,))
         return gCW
     
+
+    ## @brief gets the intrinsic camera matrix
+    # @return cameraMatrix
     def getCameraMatrix(self):
+        '''Gets the intrinsic camera matrix
+        Returns:
+            cameraMatrix: the intrinsic camera matrix
+        '''
         return self.cameraMatrix
     
+
+    ## @brief gets the camera distortion coefficients
+    # @return distCoeffs
     def getDistoritionCoeffs(self):
+        '''Gets the camera distortion coefficients
+        Returns:
+            distCoeffs: the camera distortion coefficients
+        '''
         return self.distortionCoeffs
         
 

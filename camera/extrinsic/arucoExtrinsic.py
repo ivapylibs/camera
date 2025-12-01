@@ -1,5 +1,9 @@
-''' Generate yaml file with transformation gCW
+''' 
+@brief: Generate yaml file with transformation gCW
+
 @author: Kyle de Nobel
+
+@note: Comments above file are for Doxygen support and are the same as the docstrings.
 '''
 
 from camera.utils.arucoCalibration import CameraToWorkspace
@@ -10,7 +14,12 @@ import os
 import yaml
 
 
-
+## @brief Perform calibration of the camera to world frame
+# @param[in] outFileDir directory to write the output yaml file containing extrinsic transformations to
+# @param[in] yamlFilePath file path of yaml containing aruco information
+# @param[in] cam any camera child class of camera.base
+# @param[in] cameraMatrix camera intrinsic matrix
+# @param[in] distortionCoefficients camera distortion coefficients
 def calibrate(outFileDir, yamlFilePath="", cam=None, cameraMatrix=None, distortionCoefficients=None):
     '''Perform calibration of the camera to world frame
 
@@ -91,7 +100,9 @@ def calibrate(outFileDir, yamlFilePath="", cam=None, cameraMatrix=None, distorti
     
 
 
-
+## @brief Get the pre-calibrated gCW, gWC, camMTX, distortionCoeffs
+# @param[in] filePath file path of yaml file contianing extrinsic transformations
+# @return gCW, gWC, camMTX, distortionCoeffs
 def getExtrinsics(filePath):
     '''Get the pre-calibrated 
                     gCW = world to camera transformation, 

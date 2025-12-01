@@ -140,12 +140,20 @@ class Base():
         raise NotImplementedError
     
 
-    def registerMouseClicks(self, windowName):
+    ## @brief Register a window to record mouse clicks
+    # @param windowName The name of the window to caputre clicks on
+    def registerMouseClicks(self, windowName:str):
         '''Register a window to record mouse clicks
 
         Args:
             windowName (string) : The name of the window to caputre clicks on
         '''
+        ## @brief callback to append clicks to points list
+        # @param[in] event the event that happened
+        # @param[in] x the x location of the mouse
+        # @param[in] y the y location of the mouse
+        # @param[in] flags flags for the function
+        # @param[in] params parameters for the function
         def mouseCallback(event, x, y, flags, params):
             nonlocal pts
 
@@ -167,6 +175,8 @@ class Base():
         cv2.setMouseCallback(windowName, mouseCallback)
 
 
+    ## @brief Read the mouse clicks recorded on a window.
+    # @return returnPts the x,y coordinates of the clicks or None if no clicks have happened
     def readClicks(self):
         '''Read the mouse clicks recorded on a window. Returns None if there are no clicks ready
 

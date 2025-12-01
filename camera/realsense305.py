@@ -6,6 +6,8 @@
 
 @date           11/5/2025
 
+@note: Comments above file are for Doxygen support and are the same as the docstrings
+
 '''
 
 import camera.base as base
@@ -19,14 +21,19 @@ import yaml
 
 
 
-
+## @brief config general parameters of Realsense 305 camera
 class ConfigRS305(base.CfgCamera):
-    '''config general parameters of Realsense 305 camera
-    Args:
-        filePath (str):
-            path of yaml configuration file
+    '''config general parameters of Realsense SR 305 camera
     '''
+
+    ## @brief the constructor. If yamlFilePath is not give, default initialization is done
+    # @param[in] yamlFilePath the file path of the yaml to read camera initailization parameters from
     def __init__(self, yamlFilePath:str=None):
+        '''config general parameters of Realsense 305 camera
+        Args:
+            filePath (str):
+                path of yaml configuration file
+        '''
         super().__init__(new_allowed=True)
         # check if filePath is empty, if so we use default initialization
         if yamlFilePath is None:
@@ -39,6 +46,8 @@ class ConfigRS305(base.CfgCamera):
         super().__init__(init)
      
 
+    ## @brief allows setting all configs at once
+    # @param[in] config a configuration dictionary
     def setConfig(self, filePath:str):
         '''allows setting all configs at once
         Args:
@@ -48,7 +57,22 @@ class ConfigRS305(base.CfgCamera):
         self.clear()
         self.merge_from_file(filePath)
 
+
+    ## @brief returns config dictionary
+    # @return config the config dictionary
+    def getConfig(self):
+        '''returns config dictionary
+        Returns:
+            congif: the config dictionary
+        '''
+        return self.config
+
     
+    ## @brief allows the setting of a specific parameter of a camera to a certain value
+    # @param[in] cam name of the camera to change the value of
+    # @param[in] param the name of the camera parameters
+    # @value[in] value to set parameter to
+    # @note if parameters are unclear, print out config
     def setConfigParameter(self, cam, param, value):
         '''allows the setting of a specific parameter of a camera to a certain value
 
@@ -60,21 +84,31 @@ class ConfigRS305(base.CfgCamera):
         self[cam][param] = value
 
 
+## @brief Realsense SR 305 class to capture only images
 class Color(base.Color):
-    '''Realsense305 class to caputre images
-    Args:
-        yamlInitFilePath (str):
-            path of yaml file to use for camera initialization
+    '''Realsense305 class to capture only images
     '''
+
+    ## @brief the constructor
+    # @param[in] yamlInitFilePath path of yaml file to use for camera initialization
     def __init__(self, yamlInitFilePath:str=None):
+        '''Realsense305 class to capture only images
+        Args:
+            yamlInitFilePath (str):
+                path of yaml file to use for camera initialization
+        '''
         configs = ConfigRS305(yamlInitFilePath)
         super().__init__(configs=configs)
 
         # setup the camera pipeline
         self.pipeline = rs.pipeline()
+        ## @var pipeline
+        # camera pipeline (rs.pipeline object)
 
         # enable the color camera
         self.config = rs.config()
+        ## @var config
+        # configuration for a realsense camera (rs.config object)
         self.config.enable_stream(rs.stream.color, 
                                   self.configs["colorCamera"]["imageWidth"],
                                   self.configs["colorCamera"]["imageHeight"], 
@@ -88,17 +122,26 @@ class Color(base.Color):
         self.cameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
                                       [0, intrinsics.fy, intrinsics.ppy],
                                       [0,0,1]])
+        ## @var cameraMatrix
+        # camera intrinsic matrix
         self.distortionCoeffs = intrinsics.coeffs
+        ## @var distortionCoeffs
+        # distortion coefficients for the camera
         for i in range(14-len(self.distortionCoeffs)):
             self.distortionCoeffs.append(0)
         self.distortionCoeffs = np.array(self.distortionCoeffs)
         self.K = self.cameraMatrix
+        ## @var K
+        # camera intrinsic matrix
         self.pipeline.stop()
 
         # put ready to false since we have not started the camera
         self.ready = False
+        ## @var ready
+        # indicates if the camera is ready to stream images
         
 
+    ## @brief Start the capture stream. This must be called before get_frames() or capture()
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
         '''
@@ -109,6 +152,7 @@ class Color(base.Color):
         return self.ready
     
 
+    ## @brief Stop the capture stream and release the device from use
     def stop(self):
         '''Stop the capture stream and release the device from use
         '''
@@ -117,12 +161,18 @@ class Color(base.Color):
         self.ready = False
 
 
+    ## @brief returns the configs of the camera
+    # @return configs the config dictionary of the camera
     def get_configs(self):
         '''Returns all of the configs for the camera
+        Returns:
+            configs: teh config dictionary of the camera
         '''
         return super().get_configs()
     
     
+    ## @brief sets all of the configs of the camera
+    # @param[in] yamlFilePath path of yaml configuration file
     def set_configs(self, yamlFilePath:str):
         '''Re-sets all of the configs for the camera
         Args:
@@ -148,6 +198,9 @@ class Color(base.Color):
         if previouslyReady:
             self.start()
 
+
+    ## @brief gets the next frame
+    # @return frame rgb color frame
     def get_frames(self):
         ''' Gets the next frame
 
@@ -165,13 +218,18 @@ class Color(base.Color):
 
         return colorFrame
 
+
+    ## @brief Alias for get_frames
     def capture(self):
         '''Alias for get_frames
         '''
         return self.get_frames()
     
 
-    def display(self, frame, windowName='frame'):
+    ## @brief displays a frame
+    # @param frame the frame to display
+    # @param windowName the name of the window to display the frame on
+    def display(self, frame:np.ndarray, windowName:str='frame'):
         '''Displays an image
         Args:
             frame (ndarray (N,M)):
@@ -182,12 +240,15 @@ class Color(base.Color):
         cv2.imshow(windowName, frame)
     
 
+    ## @brief Prints out the configurations in a more human readable way
     def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
         print(self.configs)
 
 
+    ## @brief Returns the intrinsic camera matrix and distortion coefficients
+    # @return out the camera intrinsic matrix and distortion coefficients
     def getCameraIntrinsics(self):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
@@ -199,32 +260,45 @@ class Color(base.Color):
         '''
         return self.cameraMatrix, self.distortionCoeffs
     
+
+    ## @brief returns the width and height of the color image
+    # return out image width, image height
     def getImagePixelWidthAndHeight(self) -> tuple :
-        '''Returns the width and heigh of the color image
+        '''Returns the width and height of the color image
         Returns:
             (imageWidth, imageHeight) (int, int):
         '''
         return self.configs["colorCamera"]["imageWidth"], self.configs["colorCamera"]["imageHeight"]
 
 
+## @brief Realsense SR 305 class to capture depth frames
 class Depth(base.Base):
     '''Realsense305 class to capture depth frames
 
     The depth images are aligned to the left camera by default class initialization
-    Args:
+    '''
+
+    ## @brief constructor
+    # @param[in] yamlInitFilePath path of yaml file to use for camera initialization
+    def __init__(self, yamlInitFilePath:str=None):
+        ''' Realsense305 class to capture depth frames
+        Args:
         yamlInitFilePath (str):
             path of yaml file to use for camera initialization
-    '''
-    def __init__(self, yamlInitFilePath:str=None):
+        '''
         if yamlInitFilePath is None:
             configs = ConfigRS305(yamlInitFilePath)
             super().__init__(configs=configs)
 
         # setup the camera pipeline
         self.pipeline = rs.pipeline()
+        ## @var pipeline
+        # camera pipeline (rs.pipeline object)
 
         # enable the depth camera
         self.config = rs.config()
+        ## @var config
+        # configuration for a realsense camera (rs.config object)
         self.config.enable_stream(rs.stream.depth, 
                                   self.configs["depthCamera"]["imageWidth"],
                                   self.configs["depthCamera"]["imageHeight"], 
@@ -240,6 +314,8 @@ class Depth(base.Base):
 
          # need to align the depth frame with the color camera
         self.align = rs.align(rs.stream.color)
+        ## @var align
+        # alignment variable to align depth frames with color frames (rs.align object)
 
         # get camera intrinsics
         profile = self.pipeline.start(self.config)
@@ -253,11 +329,17 @@ class Depth(base.Base):
         self.cameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
                                       [0, intrinsics.fy, intrinsics.ppy],
                                       [0,0,1]])
+        ## @var cameraMatrix
+        # camera intrinsic matrix
         self.distortionCoeffs = intrinsics.coeffs
+        ## @var distortionCoeffs
+        # distortion coefficients for the camera
         for i in range(14-len(self.distortionCoeffs)):
             self.distortionCoeffs.append(0)
         self.distortionCoeffs = np.array(self.distortionCoeffs)
         self.K = self.cameraMatrix
+        ## @var K
+        # camera intrinsic matrix
     
         # get depth camera instrinsics
         depthProfile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
@@ -265,22 +347,29 @@ class Depth(base.Base):
         self.depthCameraMatrix = np.array([[intrinsics.fx, 0, intrinsics.ppx],
                                       [0, intrinsics.fy, intrinsics.ppy],
                                       [0,0,1]])
+        ## @var depthCameraMatrix 
+        # intrinsic matrix for depth camera
         self.depthDistortionCoeffs = intrinsics.coeffs
+        ## @var depthDistortionCoeffs
+        # distortion coefficients for depth camera
         for i in range(14-len(self.depthDistortionCoeffs)):
             self.depthDistortionCoeffs.append(0)
         self.depthDistortionCoeffs = np.array(self.depthDistortionCoeffs)
         
         self.pipeline.stop()
 
-       
-
         # conversion of sensor units to meters
         self.depthScale = None
+        ## @var
+        # scale factor to convert depth sensor units to meters
 
         # put ready to false since we have not started the camera
         self.ready = False
+        ## @var ready
+        # indicates if the camera is ready to stream images
 
 
+    ## @brief Start the capture stream. This must be called before get_frames() or capture()
     def start(self):
         '''Start the capture stream. This must be called before get_frames() or capture()
         '''
@@ -294,6 +383,7 @@ class Depth(base.Base):
         return self.ready
     
 
+    ## @brief Stop the capture stream and release the device from use
     def stop(self):
         '''Stop the capture stream and release the device from use
         '''
@@ -303,12 +393,16 @@ class Depth(base.Base):
         self.ready = False
 
 
+    ## @brief returns the configs of the camera
+    # @return configs the config dictionary of the camera
     def get_configs(self):
         '''Returns all of the configs for the camera
         '''
         return super().get_configs()
     
     
+    ## @brief sets all of the configs of the camera
+    # @param[in] yamlFilePath path of yaml configuration file
     def set_configs(self, yamlFilePath:str):
         '''Re-sets all of the configs for the camera
         Args:
@@ -335,7 +429,10 @@ class Depth(base.Base):
             self.start()
 
 
-    def get_frames(self, normalization=False):
+    ## @brief gets the next frame
+    # @param[in] normalization if True, will normalize depth frame [0,255] for viewing. If False, depth frame is in meters
+    # @return frame depth frame
+    def get_frames(self, normalization:bool=False):
         '''Gets the next frame.
         Args:
             normalization (bool):
@@ -364,13 +461,17 @@ class Depth(base.Base):
         return depthFrame
         
     
+    ## @brief Alias for get_frames
     def capture(self):
         '''Alias for get_frames
         '''
         return self.get_frames()
     
     
-    def display(self, frame, windowName='frame'):
+    ## @brief displays a frame
+    # @param frame the frame to display
+    # @param windowName the name of the window to display the frame on
+    def display(self, frame:np.ndarray, windowName:str='frame'):
         '''Displays an image
         Args:
             frame (ndarray (N,M)):
@@ -381,12 +482,15 @@ class Depth(base.Base):
         cv2.imshow(windowName, frame)
 
 
+    ## @brief Prints out the configurations in a more human readable way
     def printConfigs(self):
         '''Prints out the configurations in a more human readable way
         '''
         print(self.configs)
 
 
+    ## @brief Returns the intrinsic camera matrix and distortion coefficients
+    # @return out the camera intrinsic matrix and distortion coefficients
     def getCameraIntrinsics(self):
         '''Returns the intrinsic camera matrix and distortion coefficients
 
@@ -395,6 +499,9 @@ class Depth(base.Base):
         '''
         return self.cameraMatrix, self.distortionCoeffs
     
+
+    ## @brief returns the width and height of the color image
+    # return out image width, image height
     def getImagePixelWidthAndHeight(self) -> tuple :
         '''Returns the width and heigh of the color image
         Returns:
@@ -403,19 +510,28 @@ class Depth(base.Base):
         return self.configs["colorCamera"]["imageWidth"], self.configs["colorCamera"]["imageHeight"]
 
 
+## @brief Realsense SR 305 class to capture color images and depth
 class RGBD(Depth):
     '''Realsense305 class to capture color images and depth
 
     The depth images are aligned to the color camera
-    Args:
+    '''
+
+    ## @brief constructor
+    # @param[in] yamlInitFilePath path of yaml file to use for camera initialization
+    def __init__(self, yamlInitFilePath:str=None):
+        '''Realsense305 class to capture color images and depth
+        Args:
         yamlInitFilePath (str):
             path of yaml file to use for camera initialization
-    '''
-    def __init__(self, yamlInitFilePath:str=None):
+        '''
         super().__init__(yamlInitFilePath)
         
 
-    def get_frames(self, normalization=False):
+    ## @brief Gets the next frames
+    # @param[in] normalization if True, will normalize depth frame [0,255] for viewing. If False, depth frame is in meters
+    # @return out colorFrame, depthFrame
+    def get_frames(self, normalization:bool=False):
         '''Gets the next frame.
         Args:
             normalization (bool):
@@ -447,8 +563,11 @@ class RGBD(Depth):
 
         return colorFrame, depthFrame
 
-        
-    def capture(self, normalization=True):
+    
+    ## @brief Gets RGBD frames in ImageRGBD() class format
+    # @param[in] normalization if True, will normalize depth frame [0,255] for viewing. If False, depth frame is in meters
+    # return images ImageRGBD object with .color and .depth images populated
+    def capture(self, normalization:bool=True):
         '''Gets RGBD frames in ImageRGBD() class format
         Args:
             normalization (bool):
@@ -462,7 +581,12 @@ class RGBD(Depth):
         return images
     
     
-    def process_loop(self, theProcessor, figOut=False):
+    ## @brief ill loop through indefinitely and send the obtained data to the passed function.
+    # The raw data can be visualized if set, otherwise the processing function is 
+    # responsible for handling output of raw, intermediat, or final data
+    # @param[in] theProcessor RGBD stream data processor. Should handle input
+    # @param[in] figOut if True, show raw data. if False, do NOT show raw data
+    def process_loop(self, theProcessor, figOut:bool=False):
         '''Will loop through indefinitely and send the obtained data to the passed function.
         The raw data can be visualized if set, otherwise the processing function is 
         responsible for handling output of raw, intermediat, or final data
@@ -495,7 +619,13 @@ class RGBD(Depth):
             display.close("depth")
 
 
-    def process_frames_selected(self, theProcessor, figOut=True):
+    ## @brief Replay and process data from the bag file attached to this instance.
+    # Will loop through the bag file and send obtained data to the passed function.
+    # The raw data can be visulaized if set, otherwise the processing function is responsible
+    # for handling output of raw, intermediate, or final data.
+    # @param[in] theProcessor RGBD stream data processor. Should handle input.
+    # @param[in] figOut if True, show raw data. if False, do NOT show raw data
+    def process_frames_selected(self, theProcessor, figOut:bool=True):
         '''Replay and process data from the bag file attached to this instance.
         Will loop through the bag file and send obtained data to the passed function.
         The raw data can be visulaized if set, otherwise the processing function is responsible
@@ -531,7 +661,18 @@ class RGBD(Depth):
         self.stop()
 
 
+    ## @brief process a single frame
+    # @param[in] theProcessor RGBD stream data processor. Should handle input.
+    # @param[in] figOut if True, show raw data. if False, do NOT show raw data
     def process_frame(self, theProcessor, figOut=False):
+        '''Processes a single frame
+        Args:
+            theProcessor (any) :
+                - RGBD stream data processor. Should handle input.
+            figOut (optional) :
+                - true -> automatically show raw data
+                - false -> do NOT automatically show raw data
+        '''
         images = self.capture()
 
         theProcessor(images)
