@@ -71,7 +71,7 @@ class ConfigRS305(base.CfgCamera):
     ## @brief allows the setting of a specific parameter of a camera to a certain value
     # @param[in] cam name of the camera to change the value of
     # @param[in] param the name of the camera parameters
-    # @value[in] value to set parameter to
+    # @param[in] value to set parameter to
     # @note if parameters are unclear, print out config
     def setConfigParameter(self, cam, param, value):
         '''allows the setting of a specific parameter of a camera to a certain value
@@ -360,7 +360,7 @@ class Depth(base.Base):
 
         # conversion of sensor units to meters
         self.depthScale = None
-        ## @var
+        ## @var depthScale
         # scale factor to convert depth sensor units to meters
 
         # put ready to false since we have not started the camera

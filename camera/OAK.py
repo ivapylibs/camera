@@ -147,8 +147,14 @@ class Color(base.Color):
         '''
         # setup device and device queues
         self.device = dai.Device(self.pipeline)
+        ## @var device
+        # camera device (dai.Device object)
         self.monoLeftQueue = self.device.getOutputQueue('monoLeftCam', 4, blocking=False)
+        ## @var monoLeftQueue
+        # frame queue for the left mono camera
         self.monoRightQueue = self.device.getOutputQueue('monoRightCam', 4, blocking=False)
+        ## @var monoRightQueue
+        # frame queue for the right mono camera
         self.ready = True
         return self.ready
 
@@ -342,6 +348,8 @@ class Depth(base.Base):
         config.depthThresholds.lowerThreshold = self.configs["spatialLocationCalculator"]["lowerDepthThreshold"]
         config.depthThresholds.upperThreshold = self.configs["spatialLocationCalculator"]["upperDepthThreshold"]
         self.calculationAlgorithm = dai.SpatialLocationCalculatorAlgorithm.MEDIAN
+        ## @var calculationAlgorithm
+        # the calculation algorithm used for the spacital location calculator
         left = self.configs["spatialLocationCalculator"]["roiTopLeft"]
         right = self.configs["spatialLocationCalculator"]["roiBottomRight"]
         config.roi = dai.Rect(dai.Point2f(left[0], left[1]), dai.Point2f(right[0], right[1]))
@@ -376,9 +384,17 @@ class Depth(base.Base):
         '''
         # setup device and device queues
         self.device = dai.Device(self.pipeline)
+        ## @var device
+        # the camera device (dai.Device object)
         self.depthQueue = self.device.getOutputQueue('depth', 4, blocking=False)
+        ## @var depthQueue
+        # frame queue for the depth camera
         self.spatialCalcQueue = self.device.getOutputQueue(name='spatialData', maxSize=4, blocking=False)
+        ## @var spatialCalcQueue
+        # queue for the spactial calculator
         self.spatialCalcConfigInQueue = self.device.getInputQueue(name='spatialCalcConfig')
+        ## @var spatialCalcConfigInQueue
+        # queue for the spatial calculator configuration
         
         self.ready = True
         return self.ready
@@ -522,11 +538,11 @@ class RGBD(Depth):
 
         # create new xlinks for mono cam
         self.monoLeftXLink = self.pipeline.create(dai.node.XLinkOut)
-        ## @var monoLeftXlink
+        ## @var monoLeftXLink
         # link for left mono camera (dai.node.XlinkOut object)
         self.monoLeftXLink.setStreamName('monoLeftCam')
         self.monoRightXLink = self.pipeline.create(dai.node.XLinkOut)
-        ## @var monoRightXlink
+        ## @var monoRightXLink
         # link for right mono camera (dai.node.XlinkOut object)
         self.monoRightXLink.setStreamName('monoRightCam')
 
@@ -556,13 +572,27 @@ class RGBD(Depth):
         '''
         # setup device queues
         self.device = dai.Device(self.pipeline)
+        ## @var device
+        # device of the camera (dai.Device object)
         self.monoLeftQueue = self.device.getOutputQueue('monoLeftCam', 4, blocking=False)
+        ## @var monoLeftQueue
+        # frame queue for the left mono camera
         self.monoRightQueue = self.device.getOutputQueue('monoRightCam', 4, blocking=False)
+        ## @var monoRightQueue
+        # frame queue for the right mono camera
         self.depthQueue = self.device.getOutputQueue('depth', 4, blocking=False)
+        ## @var depthQueue
+        # frame queue for the depth camera
         self.spatialCalcQueue = self.device.getOutputQueue(name='spatialData', maxSize=4, blocking=False)
+        ## @var spatialCalcQueue
+        # queue for the spatial calculator
         self.spatialCalcConfigInQueue = self.device.getInputQueue(name='spatialCalcConfig')
+        ## @var spatialCalcConfigInQueue
+        # queue for the config for the spatial calculator
         
         self.ready = True
+        ## @var ready
+        # indicates if the camera is ready to stream images
         return self.ready
 
 
