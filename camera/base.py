@@ -71,22 +71,36 @@ class Base():
         else:
             self.K = K
 
+        ## @var K
+        # the camera's intrinsic matrix
+
+        ## @var configs
+        # configuration dictionary for the camera
+
     #========================== set_intrinsics =========================
     #
     #
     def set_intrinsic(self, K):
+        """Sets the intrinsic matrix
+        Args:
+            K (Any): the new intrinsic matrix
+        """
         self.K = K
 
     #============================== start ==============================
     #
     #
     def start(self):
+        """Starts the camera
+        """
         pass
 
     #=============================== stop ==============================
     #
     #
     def stop(self):
+        """Stops the camera
+        """
         pass
 
     #============================ get_frames ===========================
@@ -148,6 +162,7 @@ class Base():
         Args:
             windowName (string) : The name of the window to caputre clicks on
         '''
+
         ## @brief callback to append clicks to points list
         # @param[in] event the event that happened
         # @param[in] x the x location of the mouse
