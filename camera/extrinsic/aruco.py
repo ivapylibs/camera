@@ -209,6 +209,7 @@ class CtoW_Calibrator_aruco:
 
         aruco_dict_CL = aruco.Dictionary_get(self.aruco_dict)
         parameters    = aruco.DetectorParameters_create()
+        parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
         corners_CL, ids_CL, rejectedImgPoints \
                       = aruco.detectMarkers(gray, aruco_dict_CL, parameters=parameters)
 
