@@ -71,22 +71,36 @@ class Base():
         else:
             self.K = K
 
+        ## @var K
+        # the camera's intrinsic matrix
+
+        ## @var configs
+        # configuration dictionary for the camera
+
     #========================== set_intrinsics =========================
     #
     #
     def set_intrinsic(self, K):
+        """Sets the intrinsic matrix
+        Args:
+            K (Any): the new intrinsic matrix
+        """
         self.K = K
 
     #============================== start ==============================
     #
     #
     def start(self):
+        """Starts the camera
+        """
         pass
 
     #=============================== stop ==============================
     #
     #
     def stop(self):
+        """Stops the camera
+        """
         pass
 
     #============================ get_frames ===========================
@@ -138,6 +152,59 @@ class Base():
             value (Any): The value to be set
         """
         raise NotImplementedError
+    
+
+    ## @brief Register a window to record mouse clicks
+    # @param windowName The name of the window to caputre clicks on
+    def registerMouseClicks(self, windowName:str):
+        '''Register a window to record mouse clicks
+
+        Args:
+            windowName (string) : The name of the window to caputre clicks on
+        '''
+
+        ## @brief callback to append clicks to points list
+        # @param[in] event the event that happened
+        # @param[in] x the x location of the mouse
+        # @param[in] y the y location of the mouse
+        # @param[in] flags flags for the function
+        # @param[in] params parameters for the function
+        def mouseCallback(event, x, y, flags, params):
+            nonlocal pts
+
+            # check for left mouse click: adds a point
+            if event == cv2.EVENT_LBUTTONDOWN:
+                if pts == []:
+                    pts.append(np.array([[x],[y]]))
+                else:
+                    pts[0] = np.append(pts[0], [[x],[y]], axis=1)
+
+        # create points to be accessed later
+        self.pts = []
+        pts = self.pts
+
+        # setup dummy window so we can register clicks to it
+        self.display(np.zeros((10,10)), windowName)
+        
+        # setup mouse handler
+        cv2.setMouseCallback(windowName, mouseCallback)
+
+
+    ## @brief Read the mouse clicks recorded on a window.
+    # @return returnPts the x,y coordinates of the clicks or None if no clicks have happened
+    def readClicks(self):
+        '''Read the mouse clicks recorded on a window. Returns None if there are no clicks ready
+
+        Returns:
+            clicks :
+                (ndarray(2, N)) - N is the number of clicks. Shape is [[x], [y]]
+        '''
+        if self.pts == []:
+            return None
+        else:
+            returnPts = np.copy(self.pts[0])
+            self.pts.clear()
+            return returnPts
 
 
 

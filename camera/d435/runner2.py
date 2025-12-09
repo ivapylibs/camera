@@ -80,7 +80,7 @@ class CfgD435(CfgNode):
         '''
         default_dict = dict( camera = dict ( 
               config = dict(load = False, file = "", ros = ""),
-              depth  = dict(use = True, res = [848, 480], fps = 30),
+              depth  = dict(use = True, res = [848, 480], fps = 30, bad = None),
               color  = dict(use = True , res = [1920, 1080], fps = 30) ,
               align  = False, exposure = None, gain = None,
               ros    = dict(enable = False, depth = dict(pub = False, topic = ''), \
@@ -167,6 +167,7 @@ class D435_Runner(base.Base):
             adv_mode.load_json(configStr)
 
         # Configure streaming sources.
+        # First depth.
         if (self.configs.camera.depth.use):
           self.rs_config.enable_stream(rs.stream.depth,  \
                   self.configs.camera.depth.res[0], self.configs.camera.depth.res[1], \
@@ -177,6 +178,11 @@ class D435_Runner(base.Base):
           self.depth_scale  = depth_sensor.get_depth_scale()
           self.depth_sensor = depth_sensor
 
+          if (self.configs.camera.depth.bad is not None) \
+             and (self.configs.camera.depth.bad < 0):
+           self.configs.camera.depth.bad = None
+
+        # Then color.
         if (self.configs.camera.color.use):
           self.rs_config.enable_stream(rs.stream.color, \
                   self.configs.camera.color.res[0], self.configs.camera.color.res[1], \
@@ -404,6 +410,11 @@ class D435_Runner(base.Base):
         theImage = ImageRGBD()
         theImage.color, theImage.depth, flSuccess = self.get_frames(before_scale)
 
+        if (self.configs.camera.depth.bad is not None):
+          theImage.depth = np.where(theImage.depth <= 0, \
+                                    self.configs.camera.depth.bad, \
+                                    theImage.depth)
+
         return (theImage, flSuccess)
 
     #================================ get ================================
@@ -429,6 +440,136 @@ class D435_Runner(base.Base):
             value = eval("self." + key)
 
         return value
+
+    #============================ process_loop ===========================
+    #
+    def process_loop(self, theProcessor, figOut = False):
+        """!
+        @brief  Replay and process data from the bag file attached to this instance.
+
+        Will loop through the bag file and send obtained data to the passed function.
+        The raw data can be visualized if set, otherwise the processing function is
+        responsible for handling output of raw, intermediate, or final data.
+
+        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
+        @param[in]  figOut          [False] Flag for including window output of raw data.
+        """
+
+        self.start()
+
+        while True:
+            theFrame, gotFrame = self.captureRGBD()
+
+            theProcessor(theFrame)
+
+            if figOut and gotFrame:
+              
+                if self.configs.camera.align:
+                    display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                      ratio=0.5, window_name="RGBD")
+                else:
+                  display.rgb(color_image,ratio=0.5,window_name="color")
+                  display.depth(depth_image,ratio=0.5,window_name="depth")
+
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
+
+        self.stop()
+
+        if figOut:
+            if self.configs.camera.align:
+                display.close("RGBD")
+            else:
+                display.close("color")
+                display.close("depth")
+
+    #====================== process_frames_selected ======================
+    #
+    def process_frames_selected(self, theProcessor, figOut = True):
+        """!
+        @brief  Replay and process data from the bag file attached to this instance.
+
+        Will loop through the bag file and send obtained data to the passed function.
+        The raw data can be visualized if set, otherwise the processing function is
+        responsible for handling output of raw, intermediate, or final data.
+
+        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
+        @param[in]  figOut          [True] Flag for including window output of raw data.
+        """
+
+        print("Replaying bag video. Hit 'q' to quit. Hit 's' to select.")
+        print("Selection will trigger additional processing. It might involve")
+        print("additional user input from keyboard or mouse.")
+
+        self.start()
+
+        while True:
+            theFrame, gotFrame = self.captureRGBD()
+
+            if figOut and gotFrame:
+              
+                if self.configs.camera.align:
+                    display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                      ratio=0.5, window_name="RGBD")
+                else:
+                  display.rgb(color_image,ratio=0.5,window_name="color")
+                  display.depth(depth_image,ratio=0.5,window_name="depth")
+
+            opKey = display.wait(1)
+            if opKey == ord('q'):
+                break
+            elif opKey == ord('s'):
+                theProcessor(theFrame)
+
+
+        self.stop()
+
+        if figOut:
+            if self.configs.camera.align:
+                display.close("RGBD")
+            else:
+                display.close("color")
+                display.close("depth")
+
+    #=========================== process_frame ===========================
+    #
+    def process_frame(self, theProcessor, figOut = False):
+        """!
+        @brief  Replay and process data from the bag file attached to this instance.
+
+        Will query bag file for single measurement and send obtained data to the passed
+        function.  The raw data can be visualized if set, otherwise the processing function
+        is responsible for handling output of raw, intermediate, or final data.
+
+        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
+        @param[in]  figOut          [False] Flag for including window output of raw data.
+        """
+
+        theFrame, gotFrame = self.captureRGBD()
+
+        if (gotFrame):
+          theProcessor(theFrame)
+
+          if figOut:
+              
+            if self.configs.camera.align:
+              display.rgb_depth(theFrame.color, theFrame.depth,\
+                                                ratio=0.5, window_name="RGBD")
+            else:
+              display.rgb(color_image,ratio=0.5,window_name="color")
+              display.depth(depth_image,ratio=0.5,window_name="depth")
+  
+          opKey = display.wait(0)
+
+          if figOut:
+              if self.configs.camera.align:
+                  display.close("RGBD")
+              else:
+                  display.close("color")
+                  display.close("depth")
+  
+    
 
     #================================= display =================================
     #
@@ -678,134 +819,5 @@ class Replay(D435_Runner):
             display.close("color")
             display.close("depth")
 
-    #============================ process_loop ===========================
-    #
-    def process_loop(self, theProcessor, figOut = False):
-        """!
-        @brief  Replay and process data from the bag file attached to this instance.
-
-        Will loop through the bag file and send obtained data to the passed function.
-        The raw data can be visualized if set, otherwise the processing function is
-        responsible for handling output of raw, intermediate, or final data.
-
-        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
-        @param[in]  figOut          [False] Flag for including window output of raw data.
-        """
-
-        self.start()
-
-        while True:
-            theFrame, gotFrame = self.captureRGBD()
-
-            theProcessor(theFrame)
-
-            if figOut and gotFrame:
-              
-                if self.configs.camera.align:
-                    display.rgb_depth(theFrame.color, theFrame.depth,\
-                                                      ratio=0.5, window_name="RGBD")
-                else:
-                  display.rgb(color_image,ratio=0.5,window_name="color")
-                  display.depth(depth_image,ratio=0.5,window_name="depth")
-
-            opKey = display.wait(1)
-            if opKey == ord('q'):
-                break
-
-        self.stop()
-
-        if figOut:
-            if self.configs.camera.align:
-                display.close("RGBD")
-            else:
-                display.close("color")
-                display.close("depth")
-
-    #====================== process_frames_selected ======================
-    #
-    def process_frames_selected(self, theProcessor, figOut = True):
-        """!
-        @brief  Replay and process data from the bag file attached to this instance.
-
-        Will loop through the bag file and send obtained data to the passed function.
-        The raw data can be visualized if set, otherwise the processing function is
-        responsible for handling output of raw, intermediate, or final data.
-
-        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
-        @param[in]  figOut          [True] Flag for including window output of raw data.
-        """
-
-        print("Replaying bag video. Hit 'q' to quit. Hit 's' to select.")
-        print("Selection will trigger additional processing. It might involve")
-        print("additional user input from keyboard or mouse.")
-
-        self.start()
-
-        while True:
-            theFrame, gotFrame = self.captureRGBD()
-
-            if figOut and gotFrame:
-              
-                if self.configs.camera.align:
-                    display.rgb_depth(theFrame.color, theFrame.depth,\
-                                                      ratio=0.5, window_name="RGBD")
-                else:
-                  display.rgb(color_image,ratio=0.5,window_name="color")
-                  display.depth(depth_image,ratio=0.5,window_name="depth")
-
-            opKey = display.wait(1)
-            if opKey == ord('q'):
-                break
-            elif opKey == ord('s'):
-                theProcessor(theFrame)
-
-
-        self.stop()
-
-        if figOut:
-            if self.configs.camera.align:
-                display.close("RGBD")
-            else:
-                display.close("color")
-                display.close("depth")
-
-    #=========================== process_frame ===========================
-    #
-    def process_frame(self, theProcessor, figOut = False):
-        """!
-        @brief  Replay and process data from the bag file attached to this instance.
-
-        Will query bag file for single measurement and send obtained data to the passed
-        function.  The raw data can be visualized if set, otherwise the processing function
-        is responsible for handling output of raw, intermediate, or final data.
-
-        @param[in]  theProcessor    RGBD stream data processor. Should handle input.
-        @param[in]  figOut          [False] Flag for including window output of raw data.
-        """
-
-        theFrame, gotFrame = self.captureRGBD()
-
-        if (gotFrame):
-          theProcessor(theFrame)
-
-          if figOut:
-              
-            if self.configs.camera.align:
-              display.rgb_depth(theFrame.color, theFrame.depth,\
-                                                ratio=0.5, window_name="RGBD")
-            else:
-              display.rgb(color_image,ratio=0.5,window_name="color")
-              display.depth(depth_image,ratio=0.5,window_name="depth")
-  
-          opKey = display.wait(0)
-
-          if figOut:
-              if self.configs.camera.align:
-                  display.close("RGBD")
-              else:
-                  display.close("color")
-                  display.close("depth")
-  
-    
 #
 #=================================== camera/d435 ===================================

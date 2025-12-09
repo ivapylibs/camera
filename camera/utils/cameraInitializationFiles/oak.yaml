@@ -1,0 +1,16 @@
+monoLeftCam:
+  resolution: 2       # dai.MonoCameraProperties.SensorResolution.THE_400_P
+  setSide: "left"
+monoRightCam:
+  resolution: 2       # dai.MonoCameraProperties.SensorResolution.THE_400_P
+  setSide: "right"
+depthCam:
+  leftRightCheck: True
+  subpixel: True
+  defaultProfilePreset: 2    # dai.node.StereoDepth.PresetMode.DEFAULT
+  setDepthAlign: 1           # dai.RawStereoDepthConfig.AlgorithmControl.DepthAlign.RECTIFIED_LEFT
+spatialLocationCalculator:
+  roiTopLeft: [0.4, 0.4]
+  roiBottomRight: [0.6, 0.6]
+  lowerDepthThreshold: 100
+  upperDepthThreshold: 1000
