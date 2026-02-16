@@ -21,29 +21,31 @@ import rospy
 
 import camera.utils.display as display
 import camera.rostopic as roscam
+from ivapy import display_cv
+import numpy as np
 
-
-cfgCamera = roscam.CfgROSRGBD()
-cfgCamera.colorPath = '/device_0/sensor_1/Color_0/image'
-cfgCamera.colorName = 'data'
-cfgCamera.depthPath = '/device_0/sensor_1/Depth_0/image'
-cfgCamera.depthName = 'data'
+cfgCamera = roscam.CfgROSCam()
+cfgCamera.colorPath = '/camera/color'
+cfgCamera.colorName = 'image_raw'
+cfgCamera.depthPath = '/camera/aligned_depth_to_color'
+cfgCamera.depthName = 'image_raw'
 
 theCamera = roscam.RGBD(cfgCamera)
 
 theCamera.start()
 
+theFrame = theCamera.get_frames()
 
 while not rospy.is_shutdown():
-    cIm, dIm = theCamera.get_frames()
+    image = theCamera.get_frames()
+    
+    if image is not None:
+        display_cv.rgb_depth(image.color, image.depth, ratio=0.50, window_name="RGBD" )
 
-
-    #display.rgb_depth_cv(cIm, dIm, ratio=0.25, window_name="RGBD Camera Topics." )
-
-    time.sleep(0.25)
-    #opKey = cv2.waitKey(1)
-    #if opKey == ord('q'):
-    #    break
+    # time.sleep(0.25)
+    opKey = cv2.waitKey(1)
+    if opKey == ord('q'):
+       break
 
 
 theCamera.stop()

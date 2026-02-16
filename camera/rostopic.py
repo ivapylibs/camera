@@ -3,6 +3,7 @@
 
 @brief      Get camera information from a ROS stream.
 
+@author     Nihit Agarwal [Edited], nagarwal90@gatech.edu
 @author     Patricio A. Vela,   pvela@gatech.edu
 @date       2023/07/13
 
@@ -12,10 +13,12 @@
 import numpy as np
 import rospy
 from rospy.numpy_msg import numpy_msg
-
+import message_filters
+from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
 import camera.base as Camera
+from ivapy import display_cv as display
 
 #
 #-------------------------------------------------------------------------
@@ -242,7 +245,7 @@ class RGBD(Camera.Base):
         super().__init__(configs, K)
 
         self.colorSub = None
-        self.depthSub = Nond
+        self.depthSub = None
         self.I1 = None
         self.I2 = None
 
@@ -326,14 +329,111 @@ class RGBD(Camera.Base):
         """Get the next frames
         """
         if (self.cLast):
-          C = self.D2
+          C = self.I2
         else:
-          C = self.D1
+          C = self.I1
 
         if (self.dLast):
           D = self.D2
         else:
           D = self.D1
 
-        return C, D
+        if C is None or D is None:
+           return None
+        
+        theImage = Camera.ImageRGBD(color=C, depth=D)
+        return theImage
+
+
+#
+#-------------------------------------------------------------------------
+#========================= RGBDListener Camera ========================
+#-------------------------------------------------------------------------
+#
+
+class RGBDListener(Camera.Base):
+    """!
+    @brief  Class for ROS-based color and depth-aligned camera subsrciber.
+            Has additional functionality of running custom callback
+            functions.
+
+    """
+
+    #============================= __init__ ============================
+    #
+    #
+    def __init__(self, configs = None, K = None) -> None:
+        '''!
+        @brief  Base class instantiator for roscam.
+
+        '''
+        super().__init__(configs, K)
+
+        self.colorSub = None
+        self.depthSub = None
+        
+
+    #============================== start ==============================
+    #
+    #
+    def start(self):
+
+      rospy.init_node('listener')
+
+      theTopic = self.configs.colorPath + "/" + self.configs.colorName
+      self.colorSub = message_filters.Subscriber(theTopic,                      \
+                                       Image, queue_size=1)
+      
+      theTopic = self.configs.depthPath + "/" + self.configs.depthName
+      self.depthSub = message_filters.Subscriber(theTopic,                      \
+                                       Image, queue_size=1)
+      
+      # Synchronizer
+      self.ts = message_filters.ApproximateTimeSynchronizer(
+            [self.colorSub, self.depthSub], queue_size=1, slop=0.1
+        )
+      self.ts.registerCallback(self._callback)
+
+      # Set bridge
+      self.bridge = CvBridge()
+
+      # Set frame
+      self.frame = None
+      
+
+
+    #=============================== stop ==============================
+    #
+    #
+    def stop(self):
+
+      self.colorSub.unregister()
+      self.depthSub.unregister()
+      
+    #============================ callback ============================
+    #
+    def _callback(self, rgb_msg, dep_msg):
+     
+      color = self.bridge.imgmsg_to_cv2(rgb_msg, "rgb8")
+      raw_depth = self.bridge.imgmsg_to_cv2(dep_msg, "passthrough")
+
+      depth_meters = raw_depth.astype(np.float32) * self.configs.depth_scale
+      depth_meters[depth_meters == 0] = self.configs.bad
+      self.frame = Camera.ImageRGBD(color=color, depth=depth_meters)
+
+      if "process" in self.configs :
+         self.configs.process(self.frame)
+    
+    #============================ get_frames ===========================
+    #
+    #
+    def get_frames(self):
+        """Get the next frames
+        """
+        return self.frame
+    
+    #=========================== set ===================================
+    #
+    def set(self, key, value):
+       self.configs[key] = value
 
