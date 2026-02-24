@@ -17,7 +17,7 @@ from dataclasses import dataclass
 import numpy as np
 import cv2
 
-from ivapy.Configuration import AlgConfig
+from detector.Configuration import AlgConfig
 
 @dataclass
 class ImageRGBD:
