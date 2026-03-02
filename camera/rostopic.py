@@ -378,7 +378,16 @@ class RGBDListener(Camera.Base):
     #
     def start(self):
 
-      rospy.init_node('listener')
+      # Initialize ROS node only if not already initialized
+      try:
+        if not rospy.core.is_initialized():
+          rospy.init_node('listener')
+      except Exception:
+        # Fallback: attempt init and ignore if already initialized
+        try:
+          rospy.init_node('listener')
+        except rospy.exceptions.ROSException:
+          pass
 
       theTopic = self.configs.colorPath + "/" + self.configs.colorName
       self.colorSub = message_filters.Subscriber(theTopic,                      \
@@ -431,6 +440,15 @@ class RGBDListener(Camera.Base):
         """Get the next frames
         """
         return self.frame
+
+    #============================ captureRGBD ===========================
+    #
+    #
+    def captureRGBD(self):
+        """Get the next frames
+        Returns: ImageRGBD, Success
+        """
+        return self.frame, self.frame is not None
     
     #=========================== set ===================================
     #
