@@ -29,6 +29,8 @@ try:
     from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
     from sensor_msgs.msg import Image
     _HAS_ROS2 = True
+    from realsense2_camera_msgs.msg import RGBD as RGBDMsg
+
 except Exception:  # pragma: no cover
     rclpy = None
     Node = None
@@ -38,6 +40,7 @@ except Exception:  # pragma: no cover
     DurabilityPolicy = None
     HistoryPolicy = None
     Image = None
+    RGBDMsg = None
     _HAS_ROS2 = False
 
 import camera.base as Camera
@@ -408,56 +411,42 @@ class Depth(Camera.Grayscale):
 #-------------------------------------------------------------------------
 
 class RGBD(Camera.Base):
-    """Latest-only ROS2 RGB + Depth subscriber (best-effort pairing)."""
+    """Latest-only ROS2 unified RGBD subscriber."""
 
-    def __init__(self, color_cfg=None, depth_cfg=None, K=None) -> None:
-        super().__init__(configs=None, K=K)
-
-        self.color_cfg = color_cfg
-        self.depth_cfg = depth_cfg
+    def __init__(self, configs=None, K=None) -> None:
+        super().__init__(configs=configs, K=K)
 
         self._node: Node | None = None
         self._executor: SingleThreadedExecutor | None = None
         self._spin_thread: threading.Thread | None = None
 
-        self._color_sub = None
-        self._depth_sub = None
-
+        self._sub = None
+        
         self._lock = threading.Lock()
 
-        # RGB mailbox
-        self._rgb = None
-        self._rgb_header = None
+        # Single Mailbox for RGB and Depth each (new frame overwrites previous if not consumed yet)
+        self._latest_msg = None
+        self._latest_header = None
         self._rgb_enc = None
-        self._rgb_initialized = False
-        self._rgb_received = 0
-        self._rgb_version = 0
-        self._rgb_delivered_version = 0
-        self._rgb_overwritten = 0
-
-        # Depth mailbox
-        self._depth = None
-        self._depth_header = None
         self._depth_enc = None
-        self._depth_initialized = False
-        self._depth_received = 0
-        self._depth_version = 0
-        self._depth_delivered_version = 0
-        self._depth_overwritten = 0
+        self._rgb = None
+        self._depth = None
+
+        self._initialized = False
+        self._received = 0
+        self._version = 0
+        self._delivered_version = 0
+        self._overwritten = 0
 
     def start(self):
         _maybe_init_rclpy()
 
         self._node = Node("camera_rgbd_latest")
 
-        ctopic = self.color_cfg.topicPath + "/" + self.color_cfg.topicName
-        dtopic = self.depth_cfg.topicPath + "/" + self.depth_cfg.topicName
+        topic = self.configs.topicPath + "/" + self.configs.topicName
 
-        self._color_sub = self._node.create_subscription(
-            Image, ctopic, self.colorCB, _default_qos(depth=1)
-        )
-        self._depth_sub = self._node.create_subscription(
-            Image, dtopic, self.depthCB, _default_qos(depth=1)
+        self._sub = self._node.create_subscription(
+            RGBDMsg, topic, self._rgbdCB, _default_qos(depth=1)
         )
 
         self._executor = SingleThreadedExecutor()
@@ -481,20 +470,14 @@ class RGBD(Camera.Base):
         except Exception:
             pass
 
-        # 3) Destroy subscriptions (BOTH)
+        # 3) Destroy subscription
         try:
-            if self._node is not None and self._color_sub is not None:
-                self._node.destroy_subscription(self._color_sub)
-                self._color_sub = None
+            if self._node is not None and self._sub is not None:
+                self._node.destroy_subscription(self._sub)
+                self._sub = None
         except Exception:
             pass
 
-        try:
-            if self._node is not None and self._depth_sub is not None:
-                self._node.destroy_subscription(self._depth_sub)
-                self._depth_sub = None
-        except Exception:
-            pass
 
         # 4) Destroy node
         try:
@@ -513,83 +496,70 @@ class RGBD(Camera.Base):
         except Exception:
             pass
 
-    def colorCB(self, msg: Image):
-        arr = np.frombuffer(msg.data, dtype=np.uint8)
+    def _rgbdCB(self, msg: RGBDMsg):
+
+        rgb_arr = np.frombuffer(msg.rgb.data, dtype=np.uint8)
         try:
-            img = arr.reshape(msg.height, msg.width, -1)
+            rgb_img = rgb_arr.reshape(msg.rgb.height, msg.rgb.width, -1)
         except ValueError:
-            img = arr.reshape(msg.height, msg.width)
+            rgb_img = rgb_arr.reshape(msg.rgb.height, msg.rgb.width)
 
-        with self._lock:
-            if self._rgb_initialized and (self._rgb_version != self._rgb_delivered_version):
-                self._rgb_overwritten += 1
-            else:
-                self._rgb_initialized = True
-
-            self._rgb = img
-            self._rgb_header = msg.header
-            self._rgb_enc = getattr(msg, "encoding", None)
-
-            self._rgb_received += 1
-            self._rgb_version += 1
-
-    def depthCB(self, msg: Image):
-        enc = getattr(msg, "encoding", "") or ""
-        if enc in ("16UC1", "mono16", ""):
-            dtype = np.uint16
-        elif enc == "32FC1":
-            dtype = np.float32
+        depth_enc = getattr(msg.depth, "encoding", "") or ""
+        if depth_enc in ("16UC1", "mono16", ""):
+            depth_dtype = np.uint16
+        elif depth_enc == "32FC1":
+            depth_dtype = np.float32
         else:
-            dtype = np.uint16
+            depth_dtype = np.uint16 # Default to uint16 if unknown encoding
 
-        arr = np.frombuffer(msg.data, dtype=dtype)
+        depth_arr = np.frombuffer(msg.depth.data, dtype=depth_dtype)
         try:
-            img = arr.reshape(msg.height, msg.width, -1)
+            depth_img = depth_arr.reshape(msg.depth.height, msg.depth.width, -1)
         except ValueError:
-            img = arr.reshape(msg.height, msg.width)
+            depth_img = depth_arr.reshape(msg.depth.height, msg.depth.width)
+        
 
         with self._lock:
-            if self._depth_initialized and (self._depth_version != self._depth_delivered_version):
-                self._depth_overwritten += 1
+            if self._initialized and (self._version != self._delivered_version):
+                self._overwritten += 1
             else:
-                self._depth_initialized = True
+                self._initialized = True
 
-            self._depth = img
-            self._depth_header = msg.header
-            self._depth_enc = getattr(msg, "encoding", None)
+            self._rgb = rgb_img
+            self._depth = depth_img
 
-            self._depth_received += 1
-            self._depth_version += 1
+            self._latest_msg = msg
+            self._latest_header = msg.header
+            self._rgb_enc = getattr(msg.rgb, "encoding", None)
+            self._depth_enc = depth_enc
+
+            self._received += 1
+            self._version += 1
+
 
     def get_frames(self):
         with self._lock:
-            self._rgb_delivered_version = self._rgb_version
-            self._depth_delivered_version = self._depth_version
+            self._delivered_version = self._version
             return self._rgb, self._depth
 
-    def get_headers(self):
+    def get_header(self):
         with self._lock:
-            return self._rgb_header, self._depth_header
+            return self._latest_header
 
     def get_stats(self) -> dict:
         with self._lock:
             return {
-                "rgb": {
-                    "initialized": self._rgb_initialized,
-                    "received": self._rgb_received,
-                    "overwritten": self._rgb_overwritten,
-                    "version": self._rgb_version,
-                    "delivered_version": self._rgb_delivered_version,
-                    "encoding": self._rgb_enc,
-                },
-                "depth": {
-                    "initialized": self._depth_initialized,
-                    "received": self._depth_received,
-                    "overwritten": self._depth_overwritten,
-                    "version": self._depth_version,
-                    "delivered_version": self._depth_delivered_version,
-                    "encoding": self._depth_enc,
-                },
+                    "initialized": self._initialized,
+                    "received": self._received,
+                    "overwritten": self._overwritten,
+                    "version": self._version,
+                    "delivered_version": self._delivered_version,
+                    "rgb_encoding": self._rgb_enc,
+                    "depth_encoding": self._depth_enc,
             }
+    
+    def has_frames(self) -> bool:
+        with self._lock:
+            return self._initialized
 
 #============================= camera/rostopic_latest ===========================
