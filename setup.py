@@ -22,6 +22,9 @@ setup(
         "tqdm",
         "improcessor @ git+https://github.com/ivapylibs/improcessor.git",
         "depthai==2.30.0.0",
+        "ivapy @ git+https://github.com/ivapylibs/ivapy.git",
+        "PyYAML",
+        "yacs"
     ],
     extras_require={
         "viz": ["mayavi"],
