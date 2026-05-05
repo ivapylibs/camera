@@ -24,7 +24,7 @@ except ImportError as e:
         "libraries must be visible, e.g.:\n"
         "    export LD_LIBRARY_PATH=\"$HOME/.local/lib:$LD_LIBRARY_PATH\"\n\n"
         "Then install the Python wrapper from the cloned libfreenect repo:\n"
-        "    pip install numpy \"Cython<3\"\n"
+        "    pip install \"Cython<3\"\n"
         "    cd ~/src/libfreenect/wrappers/python\n"
         "    python setup.py install\n\n"
         "The path ~/src/libfreenect assumes you cloned the repo there.\n\n"
