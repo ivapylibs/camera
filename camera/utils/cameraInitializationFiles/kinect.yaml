@@ -1,0 +1,60 @@
+# Xbox 360 Kinect / Kinect v1 initialization file
+
+colorCamera:
+  imageWidth: 640
+  imageHeight: 480
+  FPS: 30
+
+depthCamera:
+  imageWidth: 640
+  imageHeight: 480
+  FPS: 30
+
+# libfreenect usually returns RGB. Keep true if you want OpenCV-style BGR images.
+returnBGR: true
+
+# Approximate Kinect v1 RGB intrinsics.
+# Replace these with your own calibration when doing accurate pose estimation.
+cameraMatrix:
+  - [525.0, 0.0, 319.5]
+  - [0.0, 525.0, 239.5]
+  - [0.0, 0.0, 1.0]
+
+distortionCoeffs:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+
+# Approximate Kinect v1 depth/IR intrinsics.
+# These are only placeholders unless you calibrate the depth camera.
+depthCameraMatrix:
+  - [580.0, 0.0, 319.5]
+  - [0.0, 580.0, 239.5]
+  - [0.0, 0.0, 1.0]
+
+depthDistortionCoeffs:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
