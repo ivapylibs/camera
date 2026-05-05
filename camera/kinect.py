@@ -20,18 +20,16 @@ try:
 except ImportError as e:
     raise ImportError(
         "Could not import freenect.\n\n"
-        "Install libfreenect and its Python bindings first.\n\n"
-        "If you are using system Python, try:\n"
-        "    sudo apt install python3-freenect\n\n"
-        "If you are using pip/Conda, install the Python wrapper into the active environment:\n"
+        "Prerequisite: libfreenect must already be built/installed, and its shared "
+        "libraries must be visible, e.g.:\n"
+        "    export LD_LIBRARY_PATH=\"$HOME/.local/lib:$LD_LIBRARY_PATH\"\n\n"
+        "Then install the Python wrapper from the cloned libfreenect repo:\n"
         "    pip install numpy \"Cython<3\"\n"
         "    cd ~/src/libfreenect/wrappers/python\n"
         "    python setup.py install\n\n"
-        "Then verify the install with:\n"
-        "    python -c \"import freenect; print('freenect import OK')\"\n\n"
+        "The path ~/src/libfreenect assumes you cloned the repo there.\n\n"
         f"Original import error: {e}"
     ) from e
-
 
 ## @brief Pads distortion coefficients to a fixed length.
 # @param[in] coeffs distortion coefficient list or array
