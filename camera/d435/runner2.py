@@ -26,8 +26,14 @@ import camera.base as base
 import camera.utils.rs_utils as rs_utils
 from camera.base import ImageRGBD
 
-
+import rospy
 import ivapy.display_cv as display
+
+from mary_perception.msg import RGBD
+
+from cv_bridge import CvBridge
+
+
 
 
 #================================== CfgD435 ==================================
@@ -137,6 +143,8 @@ class D435_Runner(base.Base):
         pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
         pipeline_profile = self.rs_config.resolve(pipeline_wrapper)
         self.profile = pipeline_profile
+
+        self.bridge  = CvBridge()
 
 
         if self.configs.camera.config.load:
@@ -387,6 +395,69 @@ class D435_Runner(base.Base):
         else:
             return None, None, False
 
+
+    #==== get_frames_msg ====
+
+    def get_frames_msg(self, before_scale=False):
+        """!
+        @brief  Get the next frame(s) and return as RGBD message.
+
+        Args:  
+            before_scale (bool). Before the scaling. If True, will get the integer depth map before scaling.
+
+        Returns:
+            rgb [np.ndarray]: The rgb image
+            dep [np.ndarray]: The depth map in meter
+            succ_flag [bool]: The indicator for the status of fetching the next frames. \
+                If true, then both rgb and depth frames are successfully fetched.
+        """
+
+
+        # Wait for a coherent pair of frames: depth and color
+        frames = self.pipeline.wait_for_frames()
+
+
+        msg = RGBD()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "camera_link"
+
+        # Align depth to color if enabled prior to starting.
+        if (self.configs.camera.align):
+            frames = self.align.process(frames)
+
+        # split depth and color. <class 'pyrealsense2.video_frame'>
+        # Convert realsense images to numpy arrays. Depth image in meters
+        allGood = True
+        if (self.configs.camera.depth.use):
+            depth_frame = frames.get_depth_frame()
+            if not depth_frame:
+                allGood = False
+            else:
+                depth_raw = np.asanyarray(depth_frame.get_data())
+                if before_scale:
+                    depth_image = depth_raw
+                else:
+                    depth_image = depth_raw * self.depth_scale
+        else:
+            depth_image = None
+
+        if (self.configs.camera.color.use):
+            color_frame = frames.get_color_frame()
+            if not color_frame:
+                allGood = False
+            else:
+                msg.rgb = self.bridge.cv2_to_imgmsg(np.asanyarray(color_frame.get_data()), "bgr8")
+        else:
+            msg.color = None
+
+        if (self.configs.camera.depth.bad is not None):
+          depth_image = np.where(depth_image <= 0, \
+                                    self.configs.camera.depth.bad, \
+                                    depth_image)
+
+        msg.depth = self.bridge.cv2_to_imgmsg(np.asanyarray(depth_image), "64FC1")
+
+        return msg 
 
     #============================ captureRGBD ============================
     #
@@ -762,7 +833,7 @@ class Replay(D435_Runner):
             if not color_frame:
                 allGood = False
             else:
-                color_image = np.asanyarray(color_frame.get_data()) # Already RGB
+                color_image = np.asanyarray(color_frame.get_data()) # Already BGR
         else:
             color_image = None
 
