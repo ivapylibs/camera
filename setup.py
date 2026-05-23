@@ -14,17 +14,15 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "pyrealsense2==2.54.2.5684",
         "numpy",
         "matplotlib",
-        "opencv-contrib-python>=4.5.5.62",
         "scikit-learn",
         "tqdm",
-        "improcessor @ git+https://github.com/ivapylibs/improcessor.git",
-        "depthai==2.30.0.0",
-        "ivapy @ git+https://github.com/ivapylibs/ivapy.git",
         "PyYAML",
-        "yacs"
+        "yacs",
+        "pyrealsense2==2.54.2.5684",
+        "opencv-contrib-python>=4.5.5.62",
+        "depthai==2.30.0.0",
     ],
     extras_require={
         "viz": ["mayavi"],
