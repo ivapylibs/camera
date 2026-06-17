@@ -10,6 +10,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import copy
+from packaging.version import parse
 
 class CtoW_Calibrator_aruco:
     """!
@@ -207,19 +208,44 @@ class CtoW_Calibrator_aruco:
         @param[out] corners_CL  Detected aruco corners in image frame. [4, 2]
         '''
 
-        aruco_dict_CL = aruco.Dictionary_get(self.aruco_dict)
-        parameters    = aruco.DetectorParameters_create()
-        parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
-        corners_CL, ids_CL, rejectedImgPoints \
-                      = aruco.detectMarkers(gray, aruco_dict_CL, parameters=parameters)
+        print(cv2.__version__)
+        print(self.aruco_dict)
+
+        # Unsure if this minimum version is correct.  Swerve snagged 4.13.0 automatically.
+        if (parse(cv2.__version__) >= parse("4.7.0")) :
+          # 1. Get the dictionary
+          aruco_dict = cv2.aruco.getPredefinedDictionary(self.aruco_dict)
+          
+          # 2. Initialize detector parameters using the class constructor
+          parameters = cv2.aruco.DetectorParameters()
+          parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+          
+          # 3. Create the ArucoDetector object
+          detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+          
+          # 4. Use the detector object to find markers
+          corners_CL, ids_CL, rejectedImgPoints = detector.detectMarkers(gray)
+
+        else:
+          aruco_dict_CL = aruco.Dictionary_get(self.aruco_dict)
+          aruco_dict_CL = aruco.getPredefinedDictionary(self.aruco_dict)
+          parameters    = aruco.DetectorParameters_create()
+          parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
+          corners_CL, ids_CL, rejectedImgPoints \
+                        = aruco.detectMarkers(gray, aruco_dict_CL, parameters=parameters)
 
         # First frame may contain nothing.
         if ids_CL is None:
             self.img_with_ext = copy.deepcopy(rgb)
             return None, None
 
-        # For [explanation](http://amroamroamro.github.io/mexopencv/matlab/cv.estimatePoseSingleMarkers.html)
-        rvec_CL, tvec_CL, _objPoints_CL \
+        if (parse(cv2.__version__) >= parse("4.7.0")) :
+          # Note: corners_CL must be a list or tuple of corners (as returned by detectMarkers)
+          rvec_CL, tvec_CL, _objPoints_CL = \
+            cv2.aruco.estimatePoseSingleMarkers(corners_CL, self.markerLength_CL, self.cameraMatrix, self.distCoeffs)
+        else:
+          # For [explanation](http://amroamroamro.github.io/mexopencv/matlab/cv.estimatePoseSingleMarkers.html)
+          rvec_CL, tvec_CL, _objPoints_CL \
                     = aruco.estimatePoseSingleMarkers(corners_CL[0], self.markerLength_CL,
                                                   self.cameraMatrix, self.distCoeffs     )
 
@@ -249,7 +275,7 @@ class CtoW_Calibrator_aruco:
         if self.detected:
             cv2.aruco.drawDetectedMarkers(bgr_copy, self.other_infos["corners_aruco"], 
                                                     self.other_infos["ids_CL"]       )
-            aruco.drawAxis(bgr_copy, self.cameraMatrix, self.distCoeffs,
+            cv2.drawFrameAxes(bgr_copy, self.cameraMatrix, self.distCoeffs,
                                      self.other_infos["rvec_CL"], self.other_infos["tvec_CL"], 
                                                                   self.markerLength_CL       )
 
