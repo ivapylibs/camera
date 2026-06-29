@@ -172,6 +172,8 @@ class D435_Runner(base.Base):
             configFile.close()
 
             print('Loaded JSON configuration and applying.')
+            #DEBUG COMMENT
+            #print(configFile)
             adv_mode.load_json(configStr)
 
         # Configure streaming sources.

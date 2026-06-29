@@ -208,9 +208,6 @@ class CtoW_Calibrator_aruco:
         @param[out] corners_CL  Detected aruco corners in image frame. [4, 2]
         '''
 
-        print(cv2.__version__)
-        print(self.aruco_dict)
-
         # Unsure if this minimum version is correct.  Swerve snagged 4.13.0 automatically.
         if (parse(cv2.__version__) >= parse("4.7.0")) :
           # 1. Get the dictionary

@@ -228,7 +228,7 @@ class tabletopPlaneEstimator():
 
         # PCA of the point cloud
         self.pca.fit(p_Cam_vec_mid)
-        print("\n Got the fitted plane from the PCA. The three variance ratios are:{} \n".format(self.pca.explained_variance_ratio_))
+        print("\nGot the fitted plane from the PCA. The three variance ratios are:{} \n".format(self.pca.explained_variance_ratio_))
 
         # get the plane normal direction (a, b, c), which corresponds to the less important principle vector
         normal = self.pca.components_[-1, :] #(a, b, c)
