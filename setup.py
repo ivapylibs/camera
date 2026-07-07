@@ -20,7 +20,7 @@ setup(
         "tqdm",
         "PyYAML",
         "yacs",
-        "pyrealsense2==2.54.2.5684",
+        "pyrealsense2>=2.54.2.5684",
         "opencv-contrib-python>=4.5.5.62",
         "depthai==2.30.0.0",
     ],
